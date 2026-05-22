@@ -1,6 +1,7 @@
+from django.db.models import Sum, Q, F
 from rest_framework import serializers
 
-from .models import Admin, Role
+from .models import Admin, AdminProfile, Category, Employee, Order, Product, Role, Supplier
 
 
 class RoleSerializer(serializers.ModelSerializer):
@@ -9,61 +10,19 @@ class RoleSerializer(serializers.ModelSerializer):
         fields = "__all__"
         read_only_fields = ("id", "created_at", "updated_at", "deleted_at")
 
-    def validate_permission(self, value):
-        if not isinstance(value, list):
-            raise serializers.ValidationError("Permission must be an array of permission codes.")
 
-        normalized_permissions = []
-        for permission_code in value:
-            if not isinstance(permission_code, str) or not permission_code.strip():
-                raise serializers.ValidationError("Each permission must be a non-empty string.")
-            normalized_permissions.append(permission_code.strip())
-
-        return list(dict.fromkeys(normalized_permissions))
-    
-    def validate(self, attrs):
-        is_admin = attrs.get("is_admin")
-        if self.instance is not None and "is_admin" not in attrs:
-            is_admin = self.instance.is_admin
-
-        if is_admin:
-            attrs["permission"] = ["all"]
-
-        return attrs
-    
 class RoleListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Role
         fields = ("id", "role", "permission", "is_admin")
-        read_only_fields = fields
-    
-    def validate(self, attrs):
-        is_admin = attrs.get("is_admin")
-        if self.instance is not None and "is_admin" not in attrs:
-            is_admin = self.instance.is_admin
 
-        if is_admin:
-            attrs["permission"] = ["all"]
-
-        return attrs
 
 class AdminUserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
 
     class Meta:
         model = Admin
-        fields = (
-            "id",
-            "name",
-            "email",
-            "phone",
-            "password",
-            "status",
-            "role",
-            "created_at",
-            "updated_at",
-            "deleted_at",
-        )
+        fields = ("id", "name", "email", "phone", "password", "status", "role", "created_at", "updated_at", "deleted_at")
         read_only_fields = ("id", "created_at", "updated_at", "deleted_at")
 
     def create(self, validated_data):
@@ -72,18 +31,6 @@ class AdminUserSerializer(serializers.ModelSerializer):
         admin.set_password(password)
         admin.save()
         return admin
-
-    def update(self, instance, validated_data):
-        password = validated_data.pop("password", None)
-
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-
-        if password:
-            instance.set_password(password)
-
-        instance.save()
-        return instance
 
 
 class AdminLoginSerializer(serializers.Serializer):
@@ -100,5 +47,65 @@ class AdminChangePasswordSerializer(serializers.Serializer):
     new_password = serializers.CharField()
     confirm_password = serializers.CharField()
 
-class AdminLogoutSerializer(serializers.Serializer):
-    refresh = serializers.CharField()
+
+class BaseSoftDeleteSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = "__all__"
+        read_only_fields = ("id", "created_at", "updated_at", "deleted_at")
+
+
+class CategorySerializer(BaseSoftDeleteSerializer):
+    class Meta(BaseSoftDeleteSerializer.Meta):
+        model = Category
+
+
+class SupplierSerializer(BaseSoftDeleteSerializer):
+    class Meta(BaseSoftDeleteSerializer.Meta):
+        model = Supplier
+
+
+class ProductSerializer(BaseSoftDeleteSerializer):
+    stock_status = serializers.CharField(read_only=True)
+
+    class Meta(BaseSoftDeleteSerializer.Meta):
+        model = Product
+
+
+class EmployeeSerializer(BaseSoftDeleteSerializer):
+    class Meta(BaseSoftDeleteSerializer.Meta):
+        model = Employee
+
+
+class OrderSerializer(BaseSoftDeleteSerializer):
+    class Meta(BaseSoftDeleteSerializer.Meta):
+        model = Order
+
+
+class AdminProfileSerializer(BaseSoftDeleteSerializer):
+    class Meta(BaseSoftDeleteSerializer.Meta):
+        model = AdminProfile
+
+
+class DashboardSerializer(serializers.Serializer):
+    total_sales = serializers.DecimalField(max_digits=12, decimal_places=2)
+    total_revenue = serializers.DecimalField(max_digits=12, decimal_places=2)
+    active_orders = serializers.IntegerField()
+    cancel_orders = serializers.IntegerField()
+    categories = serializers.IntegerField()
+    products = serializers.IntegerField()
+    low_stock = serializers.IntegerField()
+    available_employees = serializers.IntegerField()
+
+    @staticmethod
+    def from_metrics():
+        orders = Order.objects.filter(deleted_at__isnull=True)
+        return {
+            "total_sales": orders.aggregate(v=Sum("order_value"))["v"] or 0,
+            "total_revenue": orders.exclude(status="cancelled").aggregate(v=Sum("order_value"))["v"] or 0,
+            "active_orders": orders.exclude(status="cancelled").count(),
+            "cancel_orders": orders.filter(status="cancelled").count(),
+            "categories": Category.objects.filter(deleted_at__isnull=True).count(),
+            "products": Product.objects.filter(deleted_at__isnull=True).count(),
+            "low_stock": Product.objects.filter(deleted_at__isnull=True).filter(Q(quantity=0) | Q(quantity__lte=F("reorder_level"))).count(),
+            "available_employees": Employee.objects.filter(deleted_at__isnull=True, availability="available").count(),
+        }

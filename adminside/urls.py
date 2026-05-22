@@ -1,4 +1,3 @@
-
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
@@ -7,22 +6,37 @@ from .views import (
     AdminForgotPasswordAPIView,
     AdminLoginAPIView,
     AdminLogoutAPIView,
+    AdminProfileViewSet,
+    AdminTemplateView,
     AdminTokenRefreshAPIView,
     AdminUserViewSet,
+    CategoryViewSet,
+    DashboardMetricsAPIView,
+    EmployeeViewSet,
+    OrderViewSet,
+    ProductViewSet,
     RoleView,
+    SupplierViewSet,
 )
-
 
 router = DefaultRouter()
 router.register(r"role", RoleView, basename="role")
 router.register(r"admins", AdminUserViewSet, basename="admins")
+router.register(r"categories", CategoryViewSet, basename="categories")
+router.register(r"suppliers", SupplierViewSet, basename="suppliers")
+router.register(r"products", ProductViewSet, basename="products")
+router.register(r"employees", EmployeeViewSet, basename="employees")
+router.register(r"orders", OrderViewSet, basename="orders")
+router.register(r"profiles", AdminProfileViewSet, basename="profiles")
 
 urlpatterns = [
     path("manage-roles/", include(router.urls)),
-
+    path("dashboard/metrics/", DashboardMetricsAPIView.as_view(), name="dashboard-metrics"),
     path("auth/login/", AdminLoginAPIView.as_view(), name="admin-login"),
     path("auth/refresh/", AdminTokenRefreshAPIView.as_view(), name="admin-refresh-token"),
     path("auth/logout/", AdminLogoutAPIView.as_view(), name="admin-logout"),
     path("auth/forgot-password/", AdminForgotPasswordAPIView.as_view(), name="admin-forgot-password"),
-    path("auth/change-password/", AdminChangePasswordAPIView.as_view(), name="admin-change-password")
+    path("auth/change-password/", AdminChangePasswordAPIView.as_view(), name="admin-change-password"),
+    path("ui/<str:page>/", AdminTemplateView.as_view(), name="admin-ui-page"),
+    path("ui/", AdminTemplateView.as_view(), {"page": "dashboard"}, name="admin-ui"),
 ]
