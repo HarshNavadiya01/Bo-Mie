@@ -19,6 +19,7 @@ from .views import (
     SupplierViewSet,
 )
 
+
 router = DefaultRouter()
 router.register(r"role", RoleView, basename="role")
 router.register(r"admins", AdminUserViewSet, basename="admins")
@@ -31,12 +32,15 @@ router.register(r"profiles", AdminProfileViewSet, basename="profiles")
 
 urlpatterns = [
     path("manage-roles/", include(router.urls)),
-    path("dashboard/metrics/", DashboardMetricsAPIView.as_view(), name="dashboard-metrics"),
+    path("dashboard/", DashboardMetricsAPIView.as_view(), name="dashboard-metrics"),
     path("auth/login/", AdminLoginAPIView.as_view(), name="admin-login"),
     path("auth/refresh/", AdminTokenRefreshAPIView.as_view(), name="admin-refresh-token"),
     path("auth/logout/", AdminLogoutAPIView.as_view(), name="admin-logout"),
     path("auth/forgot-password/", AdminForgotPasswordAPIView.as_view(), name="admin-forgot-password"),
     path("auth/change-password/", AdminChangePasswordAPIView.as_view(), name="admin-change-password"),
+    path("login/", AdminTemplateView.as_view(), {"page": "login"}, name="admin-ui-login"),
+    path("ui/dashboard/", AdminTemplateView.as_view(), {"page": "dashboard"}, name="admin-ui-dashboard"),
     path("ui/<str:page>/", AdminTemplateView.as_view(), name="admin-ui-page"),
     path("ui/", AdminTemplateView.as_view(), {"page": "dashboard"}, name="admin-ui"),
+
 ]

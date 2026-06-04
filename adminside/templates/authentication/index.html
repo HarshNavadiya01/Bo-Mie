@@ -1,0 +1,17 @@
+{% extends 'adminside/layout/base.html' %}
+{% load static %}
+
+{% block title %}
+  {% if page %}{{ page|title }}{% else %}BO&MIE Admin{% endif %}
+{% endblock %}
+
+{% block content %}
+  {# page is passed from AdminTemplateView; supported templates are under adminside/templates/dashboard/ ... #}
+  {% if page == 'dashboard' %}
+    {% include 'adminside/dashboard/dashboard.html' %}
+  {% else %}
+    {# Fallback: try to include a template matching the page name #}
+    {% include 'adminside/'|add:page|add:'/dashboard.html' %}
+  {% endif %}
+{% endblock %}
+

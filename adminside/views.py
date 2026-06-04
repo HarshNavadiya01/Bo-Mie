@@ -183,11 +183,15 @@ class AdminChangePasswordAPIView(APIView):
 
 
 class AdminTemplateView(APIView):
-    authentication_classes = []
-    permission_classes = []
+    authentication_classes = [AdminJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsRoleAdmin]
 
     def get(self, request, page="dashboard"):
-        return render(request, "adminside/index.html", {"page": page})
+        # Professional UI template routing
+        if page == "login":
+            return render(request, "authentication/login.html")
+
+        return render(request, "dashboard/dashboard.html", {"page": page})
 
 
 AdminView = AdminUserViewSet
