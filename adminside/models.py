@@ -3,7 +3,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.contrib.auth.hashers import check_password, make_password
 
 
-class TimeStampedSoftDeleteModel(models.Model):
+class BaseModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     deleted_at = models.DateTimeField(null=True, blank=True)
@@ -12,7 +12,7 @@ class TimeStampedSoftDeleteModel(models.Model):
         abstract = True
 
 
-class Role(TimeStampedSoftDeleteModel):
+class Role(BaseModel):
     role = models.CharField(max_length=100, unique=True)
     permission = ArrayField(base_field=models.CharField(max_length=100), default=list, blank=True)
     is_admin = models.BooleanField(default=False)
@@ -24,7 +24,7 @@ class Role(TimeStampedSoftDeleteModel):
         return self.role
 
 
-class Admin(TimeStampedSoftDeleteModel):
+class Admin(BaseModel):
     name = models.CharField(max_length=120)
     email = models.EmailField(unique=True)
     phone = models.CharField(max_length=20, unique=True)
@@ -53,7 +53,7 @@ class Admin(TimeStampedSoftDeleteModel):
         return False
 
 
-class Category(TimeStampedSoftDeleteModel):
+class Category(BaseModel):
     name = models.CharField(max_length=100, unique=True)
     slug = models.SlugField(unique=True)
     parent = models.ForeignKey("self", on_delete=models.CASCADE, null=True, blank=True, related_name="children")
@@ -69,7 +69,7 @@ class Category(TimeStampedSoftDeleteModel):
         return self.name
 
 
-class Supplier(TimeStampedSoftDeleteModel):
+class Supplier(BaseModel):
     name = models.CharField(max_length=150)
     code = models.CharField(max_length=50, unique=True)
     contact_person = models.CharField(max_length=120, blank=True)
@@ -88,7 +88,7 @@ class Supplier(TimeStampedSoftDeleteModel):
         return f"{self.name} ({self.code})"
 
 
-class Product(TimeStampedSoftDeleteModel):
+class Product(BaseModel):
     UNIT_CHOICES = [
         ("piece", "Piece"),
         ("kg", "Kilogram"),
@@ -123,7 +123,7 @@ class Product(TimeStampedSoftDeleteModel):
         return "in_stock"
 
 
-class Employee(TimeStampedSoftDeleteModel):
+class Employee(BaseModel):
     AVAILABILITY_CHOICES = [("available", "Available"), ("unavailable", "Unavailable")]
     name = models.CharField(max_length=120)
     contact_number = models.CharField(max_length=20)
@@ -133,7 +133,7 @@ class Employee(TimeStampedSoftDeleteModel):
     image = models.ImageField(upload_to="employees/", null=True, blank=True)
 
 
-class Order(TimeStampedSoftDeleteModel):
+class Order(BaseModel):
     STATUS_CHOICES = [
         ("confirmed", "Confirmed"),
         ("out_for_delivery", "Out for delivery"),
@@ -147,7 +147,7 @@ class Order(TimeStampedSoftDeleteModel):
     assigned_employee = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True, related_name="orders")
 
 
-class AdminProfile(TimeStampedSoftDeleteModel):
+class AdminProfile(BaseModel):
     admin = models.OneToOneField(Admin, on_delete=models.CASCADE, related_name="profile")
     user_id = models.CharField(max_length=80)
     notifications_enabled = models.BooleanField(default=True)
