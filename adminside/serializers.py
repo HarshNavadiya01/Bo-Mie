@@ -1,4 +1,6 @@
 from django.db.models import Sum, Q, F
+from django.utils.text import slugify
+
 from rest_framework import serializers
 
 from .models import Admin, AdminProfile, Category, Employee, Order, Product, Role, Supplier
@@ -66,9 +68,35 @@ class BaseSoftDeleteSerializer(serializers.ModelSerializer):
 
 
 class CategorySerializer(BaseSoftDeleteSerializer):
+    slug = serializers.SlugField(required=False, allow_blank=True)
+
     class Meta(BaseSoftDeleteSerializer.Meta):
         model = Category
 
+    def _build_unique_slug(self, name, instance=None):
+        base_slug = slugify(name) or "category"
+        slug = base_slug
+        suffix = 2
+        qs = Category.objects.all()
+        if instance:
+            qs = qs.exclude(pk=instance.pk)
+        while qs.filter(slug=slug).exists():
+            slug = f"{base_slug}-{suffix}"
+            suffix += 1
+        return slug
+
+    def validate_slug(self, value):
+        return slugify(value) if value else value
+
+    def create(self, validated_data):
+        if not validated_data.get("slug"):
+            validated_data["slug"] = self._build_unique_slug(validated_data.get("name", "category"))
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        if "name" in validated_data and not validated_data.get("slug"):
+            validated_data["slug"] = self._build_unique_slug(validated_data["name"], instance=instance)
+        return super().update(instance, validated_data)
 
 class SupplierSerializer(BaseSoftDeleteSerializer):
     class Meta(BaseSoftDeleteSerializer.Meta):

@@ -14,7 +14,7 @@
       <i class="bi bi-bell"></i>
       <span class="notif-dot"></span>
     </button>
-    <img src="https://ui-avatars.com/api/?name=Admin&background=6b3a1f&color=fff&size=80" class="topbar-avatar" id="topbar-avatar" alt="Profile"/>
+    <img src="https://ui-avatars.com/api/?name=Admin&background=343434&color=fff&size=80" class="topbar-avatar" id="topbar-avatar" alt="Profile"/>
   </div>
 </div>
 <script>
@@ -25,7 +25,7 @@
   for(const [k,v] of Object.entries(map)){ if(p.includes(k)){ t.textContent=v; break; } }
   // Load admin info
   const info = JSON.parse(localStorage.getItem('admin_info')||'{}');
-  if(info.name) document.getElementById('topbar-avatar').src = 'https://ui-avatars.com/api/?name='+encodeURIComponent(info.name)+'&background=6b3a1f&color=fff&size=80';
+  if(info.name) document.getElementById('topbar-avatar').src = 'https://ui-avatars.com/api/?name='+encodeURIComponent(info.name)+'&background=343434&color=fff&size=80';
   // Mobile toggle
   if(window.innerWidth<=768) document.getElementById('menuToggle').style.display='flex';
 })();

@@ -10,7 +10,7 @@
 <div class="profile-page-card">
   <div class="profile-top">
     <div style="position:relative;display:inline-block">
-      <img id="profile-avatar" src="https://ui-avatars.com/api/?name=Admin&background=6b3a1f&color=fff&size=160" class="profile-av-lg" alt="Profile"/>
+      <img id="profile-avatar" src="https://ui-avatars.com/api/?name=Admin&background=343434&color=fff&size=160" class="profile-av-lg" alt="Profile"/>
       <button onclick="document.getElementById('av-file').click()" style="position:absolute;bottom:2px;right:2px;width:26px;height:26px;border-radius:50%;background:var(--brand);border:none;color:var(--white);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px"><i class="bi bi-camera"></i></button>
       <input type="file" id="av-file" style="display:none" accept="image/*" onchange="previewAvatar(this)"/>
     </div>
@@ -86,7 +86,7 @@ async function loadProfile(){
     document.getElementById('pf-phone').value=info.phone||'';
     document.getElementById('pf-name-display').textContent=info.name||'Admin';
     document.getElementById('pf-role-display').textContent=info.role_name||'Administrator';
-    document.getElementById('profile-avatar').src=`https://ui-avatars.com/api/?name=${encodeURIComponent(info.name)}&background=6b3a1f&color=fff&size=160`;
+    document.getElementById('profile-avatar').src=`https://ui-avatars.com/api/?name=${encodeURIComponent(info.name)}&background=343434&color=fff&size=160`;
   }
   // Load profiles from API
   const data=await apiGet('/manage-roles/profiles/?page_size=1');
