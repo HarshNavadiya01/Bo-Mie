@@ -76,7 +76,7 @@ async function loadReports(){
     document.getElementById('r-yoy').textContent      = fmtMoney(d.total_revenue*1.4);
   }
 
-  // Chart
+// Chart
   const months=['Sep','Oct','Nov','Dec','Jan','Feb','Mar'];
   const rev=[22000,28000,38000,48000,44000,58000,42000];
   const pro=[18000,24000,32000,40000,36000,50000,35000];
@@ -85,8 +85,8 @@ async function loadReports(){
   prChartInstance=new Chart(ctx,{
     type:'line',
     data:{labels:months,datasets:[
-      {label:'Revenue',data:rev,borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.1)',tension:.4,fill:true,pointRadius:4,pointBackgroundColor:'#3b82f6'},
-      {label:'Profit',data:pro,borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,.05)',tension:.4,fill:true,pointRadius:4}
+      {label:'Revenue',data:rev,borderColor:'#343434',backgroundColor:'rgba(52,52,52,.1)',tension:.4,fill:true,pointRadius:4,pointBackgroundColor:'#343434'},
+      {label:'Profit',data:pro,borderColor:'#686869',backgroundColor:'rgba(104,104,105,.06)',tension:.4,fill:true,pointRadius:4}
     ]},
     options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,position:'bottom',labels:{usePointStyle:true,padding:16}}},scales:{x:{grid:{display:false}},y:{grid:{color:'#f4f4f5'},ticks:{callback:v=>'$'+v.toLocaleString()}}}}
   });

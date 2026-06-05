@@ -23,8 +23,8 @@
     <div class="card-header">
       <span class="card-title">Order Summary</span>
       <div style="display:flex;gap:16px;font-size:12px;color:var(--gray-500)">
-        <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#3b82f6;margin-right:4px"></span>Ordered</span>
-        <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#f59e0b;margin-right:4px"></span>Delivered</span>
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#343434;margin-right:4px"></span>Ordered</span>
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#686869;margin-right:4px"></span>Delivered</span>
       </div>
     </div>
     <div class="card-body"><div class="chart-wrap"><canvas id="orderChart"></canvas></div></div>
@@ -115,8 +115,8 @@
     data:{
       labels:months,
       datasets:[
-        {label:'Ordered',data:ordered,borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.08)',tension:.4,fill:true,pointRadius:3},
-        {label:'Delivered',data:delivered,borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,.05)',tension:.4,fill:true,pointRadius:3}
+        {label:'Ordered',data:ordered,borderColor:'#343434',backgroundColor:'rgba(52,52,52,.08)',tension:.4,fill:true,pointRadius:3},
+        {label:'Delivered',data:delivered,borderColor:'#686869',backgroundColor:'rgba(104,104,105,.06)',tension:.4,fill:true,pointRadius:3}
       ]
     },
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{color:'#f4f4f5'}}}}
