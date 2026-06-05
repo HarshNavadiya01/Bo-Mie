@@ -1,60 +1,45 @@
-<div class="sidebar">
-
-    <div class="logo">
-        <h3>BO&MIE</h3>
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-box">
+      <span class="logo-main">BO&amp;MIE</span>
+      <span class="logo-sub">Paris</span>
     </div>
-
-    <ul class="menu">
-
-        <li>
-            <a href="#">
-                <i class="bi bi-grid"></i>
-                Dashboard
-            </a>
-        </li>
-
-        <li>
-            <a href="#">
-                <i class="bi bi-box-seam"></i>
-                Inventory
-            </a>
-        </li>
-
-        <li>
-            <a href="#">
-                <i class="bi bi-graph-up"></i>
-                Reports
-            </a>
-        </li>
-
-        <li>
-            <a href="#">
-                <i class="bi bi-people"></i>
-                Employees
-            </a>
-        </li>
-
-        <li>
-            <a href="#">
-                <i class="bi bi-cart"></i>
-                Orders
-            </a>
-        </li>
-
-    </ul>
-
-    <div class="sidebar-bottom">
-
-        <a href="#">
-            <i class="bi bi-gear"></i>
-            Settings
-        </a>
-
-        <a href="#">
-            <i class="bi bi-box-arrow-right"></i>
-            Logout
-        </a>
-
-    </div>
-
+  </div>
+  <nav class="sidebar-nav">
+    <span class="nav-section-label">Main Menu</span>
+    <a href="/api/v1/admin/ui/dashboard/" class="nav-item" data-page="dashboard">
+      <i class="bi bi-grid-1x2"></i> Dashboard
+    </a>
+    <a href="/api/v1/admin/ui/inventory/" class="nav-item" data-page="inventory">
+      <i class="bi bi-box-seam"></i> Inventory
+    </a>
+    <a href="/api/v1/admin/ui/reports/" class="nav-item" data-page="reports">
+      <i class="bi bi-graph-up-arrow"></i> Reports
+    </a>
+    <a href="/api/v1/admin/ui/employees/" class="nav-item" data-page="employees">
+      <i class="bi bi-people"></i> Employee Reports
+    </a>
+    <a href="/api/v1/admin/ui/orders/" class="nav-item" data-page="orders">
+      <i class="bi bi-cart3"></i> Orders
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <a href="/api/v1/admin/ui/settings/" class="nav-item" data-page="settings">
+      <i class="bi bi-gear"></i> Settings
+    </a>
+    <button class="nav-item" onclick="confirmLogout()">
+      <i class="bi bi-box-arrow-right"></i> Log Out
+    </button>
+  </div>
 </div>
+<script>
+function confirmLogout() {
+  if(confirm('Are you sure you want to log out?')) {
+    const ref = localStorage.getItem('admin_refresh');
+    if(ref) {
+      fetch('/api/v1/admin/auth/logout/', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+ref}});
+    }
+    doLogout();
+  }
+}
+</script>

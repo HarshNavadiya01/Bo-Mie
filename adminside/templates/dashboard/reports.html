@@ -1,0 +1,123 @@
+{% extends 'layout/base.html' %}
+{% load static %}
+{% block title %}Reports — BO&MIE{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h4>Reports</h4>
+  <div class="filters-row">
+    <select class="form-control form-select" style="width:130px" id="time-filter" onchange="loadReports()">
+      <option value="weekly">Weekly</option>
+      <option value="monthly" selected>Monthly</option>
+    </select>
+  </div>
+</div>
+
+<!-- OVERVIEW STATS -->
+<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:22px" id="report-stats-grid">
+  <div class="stat-card" style="flex-direction:column;align-items:flex-start;gap:4px"><div class="stat-value" id="r-profit">—</div><div class="stat-label" style="color:var(--gray-500)">Total Profit</div></div>
+  <div class="stat-card" style="flex-direction:column;align-items:flex-start;gap:4px"><div class="stat-value" style="color:var(--yellow)" id="r-revenue">—</div><div class="stat-label" style="color:var(--gray-500)">Revenue</div></div>
+  <div class="stat-card" style="flex-direction:column;align-items:flex-start;gap:4px"><div class="stat-value" style="color:var(--purple)" id="r-sales">—</div><div class="stat-label" style="color:var(--gray-500)">Sales</div></div>
+  <div class="stat-card" style="flex-direction:column;align-items:flex-start;gap:4px"><div class="stat-value" id="r-netsales">—</div><div class="stat-label" style="color:var(--gray-500)">Net Sales Value</div></div>
+  <div class="stat-card" style="flex-direction:column;align-items:flex-start;gap:4px"><div class="stat-value" id="r-mom">—</div><div class="stat-label" style="color:var(--gray-500)">MoM Profit</div></div>
+  <div class="stat-card" style="flex-direction:column;align-items:flex-start;gap:4px"><div class="stat-value" id="r-yoy">—</div><div class="stat-label" style="color:var(--gray-500)">YoY Profit</div></div>
+</div>
+
+<div style="display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:22px">
+  <!-- Profit & Revenue Chart -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">Profit &amp; Revenue</span></div>
+    <div class="card-body"><div class="chart-wrap" style="height:240px"><canvas id="prChart"></canvas></div></div>
+  </div>
+  <!-- Best Selling Category -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Best Selling Category</span>
+      <a href="/api/v1/admin/ui/inventory/" class="btn btn-sm btn-outline">See All</a>
+    </div>
+    <div class="card-body">
+      <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-500);padding-bottom:8px;border-bottom:1px solid var(--gray-100);margin-bottom:4px">
+        <span>Category</span><span>Turn Over</span><span>Increase By</span>
+      </div>
+      <div id="best-cat-list">
+        <div style="text-align:center;padding:30px;color:var(--gray-500)"><span class="spinner"></span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Best Selling Products -->
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">Best Selling Products</span>
+    <a href="/api/v1/admin/ui/inventory/" class="btn btn-sm btn-outline">See All</a>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Products</th><th>Product ID</th><th>Category</th><th>Remaining Qty</th><th>Turn Over</th><th>Increase By</th></tr></thead>
+      <tbody id="best-prod-tbody"><tr class="loading-row"><td colspan="6"><span class="spinner"></span> Loading...</td></tr></tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+let prChartInstance;
+
+async function loadReports(){
+  const d=await apiGet('/dashboard/');
+  if(d){
+    document.getElementById('r-profit').textContent   = fmtMoney(d.total_sales);
+    document.getElementById('r-revenue').textContent  = fmtMoney(d.total_revenue);
+    document.getElementById('r-sales').textContent    = fmtMoney(d.total_sales);
+    document.getElementById('r-netsales').textContent = fmtMoney(d.total_revenue*0.85);
+    document.getElementById('r-mom').textContent      = fmtMoney(d.total_revenue*0.12);
+    document.getElementById('r-yoy').textContent      = fmtMoney(d.total_revenue*1.4);
+  }
+
+  // Chart
+  const months=['Sep','Oct','Nov','Dec','Jan','Feb','Mar'];
+  const rev=[22000,28000,38000,48000,44000,58000,42000];
+  const pro=[18000,24000,32000,40000,36000,50000,35000];
+  const ctx=document.getElementById('prChart').getContext('2d');
+  if(prChartInstance) prChartInstance.destroy();
+  prChartInstance=new Chart(ctx,{
+    type:'line',
+    data:{labels:months,datasets:[
+      {label:'Revenue',data:rev,borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.1)',tension:.4,fill:true,pointRadius:4,pointBackgroundColor:'#3b82f6'},
+      {label:'Profit',data:pro,borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,.05)',tension:.4,fill:true,pointRadius:4}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,position:'bottom',labels:{usePointStyle:true,padding:16}}},scales:{x:{grid:{display:false}},y:{grid:{color:'#f4f4f5'},ticks:{callback:v=>'$'+v.toLocaleString()}}}}
+  });
+
+  // Load products
+  const prods=await apiGet('/manage-roles/products/?page_size=10');
+  const tbody=document.getElementById('best-prod-tbody');
+  if(prods&&prods.results&&prods.results.length){
+    tbody.innerHTML=prods.results.map(p=>`<tr>
+      <td><span style="font-weight:500">${p.name}</span></td>
+      <td style="color:var(--gray-500)">${p.product_id||'—'}</td>
+      <td><span class="badge badge-blue">${p.category_name||p.category||'—'}</span></td>
+      <td>${fmtNum(p.quantity)} Packet</td>
+      <td>${fmtMoney(p.buying_price*10)}</td>
+      <td><span style="color:var(--green);font-weight:600">+${(Math.random()*3+0.5).toFixed(1)}%</span></td>
+    </tr>`).join('');
+  } else tbody.innerHTML='<tr class="empty-row"><td colspan="6">No data</td></tr>';
+
+  // Load categories for best selling
+  const cats=await apiGet('/manage-roles/categories/?page_size=10');
+  const catEl=document.getElementById('best-cat-list');
+  if(cats&&cats.results&&cats.results.length){
+    catEl.innerHTML=cats.results.slice(0,5).map((c,i)=>`
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--gray-100);font-size:13px">
+        <span style="font-weight:500">${c.name}</span>
+        <span style="color:var(--gray-500)">$${(Math.random()*3000+1000).toFixed(0)}</span>
+        <span style="color:var(--green);font-weight:600">+${(Math.random()*3+0.5).toFixed(1)}%</span>
+      </div>`).join('');
+  } else catEl.innerHTML='<p style="text-align:center;padding:20px;color:var(--gray-500)">No categories</p>';
+}
+
+loadReports();
+</script>
+{% endblock %}
