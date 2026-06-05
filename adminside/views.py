@@ -1,6 +1,6 @@
 from django.contrib.auth.tokens import default_token_generator
 from django.db.models import Sum
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
@@ -30,6 +30,16 @@ from .serializers import (
     RoleSerializer,
     SupplierSerializer,
 )
+
+# Page → template mapping
+PAGE_TEMPLATES = {
+    "dashboard": "dashboard/dashboard.html",
+    "inventory": "dashboard/inventory.html",
+    "reports":   "dashboard/reports.html",
+    "employees": "dashboard/employee.html",
+    "orders":    "dashboard/orders.html",
+    "settings":  "dashboard/settings.html",
+}
 
 
 class SoftDeleteModelViewSet(ModelViewSet):
@@ -81,6 +91,13 @@ class ProductViewSet(SoftDeleteModelViewSet):
     authentication_classes = [AdminJWTAuthentication]
     permission_classes = [IsAuthenticated]
 
+    def get_queryset(self):
+        qs = super().get_queryset()
+        cat = self.request.query_params.get("category")
+        if cat:
+            qs = qs.filter(category_id=cat)
+        return qs
+
 
 class EmployeeViewSet(SoftDeleteModelViewSet):
     queryset = Employee.objects.all()
@@ -88,12 +105,26 @@ class EmployeeViewSet(SoftDeleteModelViewSet):
     authentication_classes = [AdminJWTAuthentication]
     permission_classes = [IsAuthenticated]
 
+    def get_queryset(self):
+        qs = super().get_queryset()
+        avail = self.request.query_params.get("availability")
+        if avail:
+            qs = qs.filter(availability=avail)
+        return qs
+
 
 class OrderViewSet(SoftDeleteModelViewSet):
     queryset = Order.objects.select_related("product", "assigned_employee")
     serializer_class = OrderSerializer
     authentication_classes = [AdminJWTAuthentication]
     permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        st = self.request.query_params.get("status")
+        if st:
+            qs = qs.filter(status=st)
+        return qs
 
 
 class AdminProfileViewSet(SoftDeleteModelViewSet):
@@ -120,7 +151,11 @@ class AdminLoginAPIView(APIView):
         serializer = AdminLoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         try:
-            admin = Admin.objects.select_related("role").get(email=serializer.validated_data["email"], deleted_at__isnull=True, status=True)
+            admin = Admin.objects.select_related("role").get(
+                email=serializer.validated_data["email"],
+                deleted_at__isnull=True,
+                status=True,
+            )
         except Admin.DoesNotExist:
             return Response({"detail": "Invalid credentials."}, status=status.HTTP_401_UNAUTHORIZED)
         if not admin.verify_password(serializer.validated_data["password"]):
@@ -129,7 +164,11 @@ class AdminLoginAPIView(APIView):
         refresh["admin_id"] = admin.id
         refresh["role_id"] = admin.role_id
         refresh["is_admin"] = admin.role.is_admin
-        return Response({"access": str(refresh.access_token), "refresh": str(refresh), "admin": AdminUserSerializer(admin).data})
+        return Response({
+            "access": str(refresh.access_token),
+            "refresh": str(refresh),
+            "admin": AdminUserSerializer(admin).data,
+        })
 
 
 class AdminTokenRefreshAPIView(APIView):
@@ -169,7 +208,10 @@ class AdminForgotPasswordAPIView(APIView):
             admin = Admin.objects.get(email=serializer.validated_data["email"], deleted_at__isnull=True)
         except Admin.DoesNotExist:
             return Response({"detail": "If this email exists, a reset token has been generated."})
-        return Response({"uid": urlsafe_base64_encode(force_bytes(admin.pk)), "reset_token": default_token_generator.make_token(admin)})
+        return Response({
+            "uid": urlsafe_base64_encode(force_bytes(admin.pk)),
+            "reset_token": default_token_generator.make_token(admin),
+        })
 
 
 class AdminChangePasswordAPIView(APIView):
@@ -183,15 +225,27 @@ class AdminChangePasswordAPIView(APIView):
 
 
 class AdminTemplateView(APIView):
-    authentication_classes = [AdminJWTAuthentication]
-    permission_classes = [IsAuthenticated, IsRoleAdmin]
+    """
+    Serve HTML templates for the admin SPA.
+    Auth is handled client-side via JWT in localStorage.
+    Django only serves the shell; the JS checks for a valid token.
+    """
+    authentication_classes = []
+    permission_classes = []
 
     def get(self, request, page="dashboard"):
-        # Professional UI template routing
-        if page == "login":
-            return render(request, "authentication/login.html")
-
-        return render(request, "dashboard/dashboard.html", {"page": page})
+        template = PAGE_TEMPLATES.get(page, "dashboard/dashboard.html")
+        return render(request, template, {"page": page})
 
 
 AdminView = AdminUserViewSet
+
+
+class AdminLoginTemplateView(APIView):
+    """Public login page - no auth required."""
+    authentication_classes = []
+    permission_classes = []
+
+    def get(self, request):
+        # If already logged in, redirect to dashboard
+        return render(request, "authentication/login.html")

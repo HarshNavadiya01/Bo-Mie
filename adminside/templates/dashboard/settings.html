@@ -1,0 +1,137 @@
+{% extends 'layout/base.html' %}
+{% load static %}
+{% block title %}Settings — BO&MIE{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h4>Settings</h4>
+</div>
+
+<div class="profile-page-card">
+  <div class="profile-top">
+    <div style="position:relative;display:inline-block">
+      <img id="profile-avatar" src="https://ui-avatars.com/api/?name=Admin&background=6b3a1f&color=fff&size=160" class="profile-av-lg" alt="Profile"/>
+      <button onclick="document.getElementById('av-file').click()" style="position:absolute;bottom:2px;right:2px;width:26px;height:26px;border-radius:50%;background:var(--brand);border:none;color:var(--white);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px"><i class="bi bi-camera"></i></button>
+      <input type="file" id="av-file" style="display:none" accept="image/*" onchange="previewAvatar(this)"/>
+    </div>
+    <div>
+      <div class="profile-name" id="pf-name-display">Admin</div>
+      <div class="profile-role" id="pf-role-display">Administrator</div>
+    </div>
+  </div>
+
+  <div class="form-row" style="margin-bottom:16px">
+    <div class="form-group"><label class="form-label">Full Name <span class="req">*</span></label><input class="form-control" id="pf-name" placeholder="Enter your name"/></div>
+    <div class="form-group"><label class="form-label">User ID</label><input class="form-control" id="pf-userid" placeholder="Enter your user ID"/></div>
+  </div>
+  <div class="form-row" style="margin-bottom:16px">
+    <div class="form-group"><label class="form-label">Contact</label>
+      <div style="display:flex;gap:8px">
+        <div style="width:64px;flex-shrink:0"><input class="form-control" value="+91" style="text-align:center" id="pf-code"/></div>
+        <input class="form-control" id="pf-phone" placeholder="Phone number"/>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Email</label><input class="form-control" id="pf-email" type="email" placeholder="Enter your email"/></div>
+  </div>
+  <div class="form-group" style="margin-bottom:24px">
+    <label class="form-label">New Password</label>
+    <div style="position:relative">
+      <input class="form-control" id="pf-pass" type="password" placeholder="Enter new password" style="padding-right:40px"/>
+      <button onclick="togglePass()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);border:none;background:none;cursor:pointer;color:var(--gray-500)"><i class="bi bi-eye-slash" id="pass-eye"></i></button>
+    </div>
+  </div>
+
+  <div style="border-top:1px solid var(--gray-100);padding-top:20px;margin-bottom:20px">
+    <div style="font-size:13px;font-weight:600;color:var(--gray-700);margin-bottom:14px">Preferences</div>
+    <div class="toggle-wrap">
+      <div class="toggle-info"><h6>Notifications</h6><p>Receive app notifications</p></div>
+      <label class="toggle"><input type="checkbox" id="pf-notif" checked/><span class="toggle-slider"></span></label>
+    </div>
+    <div class="toggle-wrap">
+      <div class="toggle-info"><h6>Location</h6><p>Enable location access</p></div>
+      <label class="toggle"><input type="checkbox" id="pf-loc"/><span class="toggle-slider"></span></label>
+    </div>
+  </div>
+
+  <div style="display:flex;justify-content:flex-end;gap:10px">
+    <button class="btn btn-secondary" onclick="loadProfile()">Reset</button>
+    <button class="btn btn-primary" onclick="saveProfile()"><i class="bi bi-check-lg"></i> Save Changes</button>
+  </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+let profileId=null;
+
+function previewAvatar(input){
+  if(!input.files||!input.files[0]) return;
+  const reader=new FileReader();
+  reader.onload=e=>{document.getElementById('profile-avatar').src=e.target.result;};
+  reader.readAsDataURL(input.files[0]);
+}
+
+function togglePass(){
+  const inp=document.getElementById('pf-pass');
+  const icon=document.getElementById('pass-eye');
+  if(inp.type==='password'){inp.type='text';icon.className='bi bi-eye';}
+  else{inp.type='password';icon.className='bi bi-eye-slash';}
+}
+
+async function loadProfile(){
+  const info=JSON.parse(localStorage.getItem('admin_info')||'{}');
+  if(info.name){
+    document.getElementById('pf-name').value=info.name||'';
+    document.getElementById('pf-email').value=info.email||'';
+    document.getElementById('pf-phone').value=info.phone||'';
+    document.getElementById('pf-name-display').textContent=info.name||'Admin';
+    document.getElementById('pf-role-display').textContent=info.role_name||'Administrator';
+    document.getElementById('profile-avatar').src=`https://ui-avatars.com/api/?name=${encodeURIComponent(info.name)}&background=6b3a1f&color=fff&size=160`;
+  }
+  // Load profiles from API
+  const data=await apiGet('/manage-roles/profiles/?page_size=1');
+  if(data&&data.results&&data.results.length){
+    const p=data.results[0];
+    profileId=p.id;
+    document.getElementById('pf-userid').value=p.user_id||'';
+    document.getElementById('pf-notif').checked=p.notifications_enabled;
+    document.getElementById('pf-loc').checked=p.location_enabled;
+  }
+}
+
+async function saveProfile(){
+  const name=document.getElementById('pf-name').value.trim();
+  const email=document.getElementById('pf-email').value.trim();
+  if(!name){toast('Please enter your name','error');return;}
+
+  // Update admin if ID known
+  const info=JSON.parse(localStorage.getItem('admin_info')||'{}');
+  if(info.id){
+    const body={name,email};
+    const phone=document.getElementById('pf-phone').value.trim();
+    if(phone) body.phone=phone;
+    const pass=document.getElementById('pf-pass').value;
+    if(pass) body.password=pass;
+    const r=await apiPatch(`/manage-roles/admins/${info.id}/`,body);
+    if(r&&r.ok){
+      const updated=await r.json();
+      localStorage.setItem('admin_info',JSON.stringify({...info,...updated}));
+    }
+  }
+
+  // Update profile settings
+  if(profileId){
+    await apiPatch(`/manage-roles/profiles/${profileId}/`,{
+      user_id:document.getElementById('pf-userid').value,
+      notifications_enabled:document.getElementById('pf-notif').checked,
+      location_enabled:document.getElementById('pf-loc').checked
+    });
+  }
+
+  document.getElementById('pf-name-display').textContent=name||'Admin';
+  toast('Profile saved successfully','success');
+}
+
+loadProfile();
+</script>
+{% endblock %}

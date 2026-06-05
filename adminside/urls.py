@@ -8,6 +8,7 @@ from .views import (
     AdminLogoutAPIView,
     AdminProfileViewSet,
     AdminTemplateView,
+    AdminLoginTemplateView,
     AdminTokenRefreshAPIView,
     AdminUserViewSet,
     CategoryViewSet,
@@ -18,7 +19,6 @@ from .views import (
     RoleView,
     SupplierViewSet,
 )
-
 
 router = DefaultRouter()
 router.register(r"role", RoleView, basename="role")
@@ -32,15 +32,21 @@ router.register(r"profiles", AdminProfileViewSet, basename="profiles")
 
 urlpatterns = [
     path("manage-roles/", include(router.urls)),
+
+    # Dashboard metrics - two paths for compatibility
     path("dashboard/", DashboardMetricsAPIView.as_view(), name="dashboard-metrics"),
+    path("dashboard/metrics/", DashboardMetricsAPIView.as_view(), name="dashboard-metrics-v2"),
+
+    # Auth
     path("auth/login/", AdminLoginAPIView.as_view(), name="admin-login"),
     path("auth/refresh/", AdminTokenRefreshAPIView.as_view(), name="admin-refresh-token"),
     path("auth/logout/", AdminLogoutAPIView.as_view(), name="admin-logout"),
     path("auth/forgot-password/", AdminForgotPasswordAPIView.as_view(), name="admin-forgot-password"),
     path("auth/change-password/", AdminChangePasswordAPIView.as_view(), name="admin-change-password"),
-    path("login/", AdminTemplateView.as_view(), {"page": "login"}, name="admin-ui-login"),
+
+    # UI pages
+    path("login/", AdminLoginTemplateView.as_view(), name="admin-ui-login"),
+    path("ui/", AdminTemplateView.as_view(), {"page": "dashboard"}, name="admin-ui"),
     path("ui/dashboard/", AdminTemplateView.as_view(), {"page": "dashboard"}, name="admin-ui-dashboard"),
     path("ui/<str:page>/", AdminTemplateView.as_view(), name="admin-ui-page"),
-    path("ui/", AdminTemplateView.as_view(), {"page": "dashboard"}, name="admin-ui"),
-
 ]
