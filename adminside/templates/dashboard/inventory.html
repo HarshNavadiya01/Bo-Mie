@@ -60,10 +60,60 @@
   </div>
 </div>
 
+<!-- ONBOARDING IMAGES TABLE -->
+<div class="card" style="margin-bottom:18px">
+  <div class="card-header">
+    <span class="card-title">Onboarding Images</span>
+    <button class="btn btn-primary btn-sm" onclick="openModal('addOnboardingModal')"><i class="bi bi-plus-lg"></i> Add Image</button>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Preview</th><th>Title</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody id="onboarding-tbody"><tr class="loading-row"><td colspan="4"><span class="spinner"></span> Loading onboarding...</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ADD ONBOARDING MODAL -->
+<div class="modal-overlay" id="addOnboardingModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h5>New Onboarding Image</h5>
+      <button class="modal-close" onclick="closeModal('addOnboardingModal')"><i class="bi bi-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="img-upload-area" onclick="document.getElementById('ob-img').click()">
+        <i class="bi bi-image"></i><p>Drag image here or <strong>Browse image</strong></p>
+        <input type="file" id="ob-img" style="display:none" accept="image/*"/>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Title</label>
+        <input class="form-control" id="ob-title" placeholder="Optional title"/>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Sort Order</label>
+        <input class="form-control" id="ob-sort" type="number" value="0"/>
+      </div>
+
+      <div class="toggle-wrap" style="padding-top:0">
+        <div class="toggle-info"><h6>Active</h6><p>Active images will be shown to users.</p></div>
+        <label class="toggle"><input type="checkbox" id="ob-active" checked><span class="toggle-slider"></span></label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('addOnboardingModal')">Discard</button>
+      <button class="btn btn-primary" onclick="addOnboarding()">Add</button>
+    </div>
+  </div>
+</div>
+
 <!-- PRODUCTS TABLE -->
 <div class="card">
   <div class="card-header">
     <span class="card-title">Products</span>
+
     <div class="filters-row">
       <select class="form-control form-select" style="width:160px" id="cat-filter" onchange="loadProducts(1)">
         <option value="">All Categories</option>
@@ -133,6 +183,15 @@
 <script>
 let prodPage = 1, prodTotal = 0, prodPageSize = 10;
 let categoryCache = [];
+let onboardingCache = [];
+
+function resetOnboardingModal(){
+  document.getElementById('ob-img').value = '';
+  document.getElementById('ob-title').value = '';
+  document.getElementById('ob-sort').value = 0;
+  document.getElementById('ob-active').checked = true;
+}
+
 
 function slugifyText(value) {
   return (value || '').toString().trim().toLowerCase()
@@ -332,8 +391,88 @@ async function deleteProduct(id, name) {
   else toast('Failed to delete product','error');
 }
 
+// ===== ONBOARDING CRUD =====
+async function loadOnboarding(){
+  const data = await apiGet('/manage-roles/screen-onboarding/?page_size=100');
+  onboardingCache = data?.results || [];
+  const tbody = document.getElementById('onboarding-tbody');
+  if(!onboardingCache.length){
+    tbody.innerHTML='<tr class="empty-row"><td colspan="4">No onboarding images found</td></tr>';
+    return;
+  }
+  tbody.innerHTML = onboardingCache.map(o=>{
+    const statusBadge = o.is_active ? 'badge-green' : 'badge-gray';
+    const statusText = o.is_active ? 'Active' : 'Inactive';
+    const img = o.image ? `<img src="${o.image}" style="width:46px;height:46px;border-radius:10px;object-fit:cover;border:1px solid var(--gray-200)"/>` : '<span style="color:var(--gray-400)">—</span>';
+
+    return `<tr>
+      <td>${img}</td>
+      <td>${escapeHtml(o.title || '—')}</td>
+
+      <td>
+        <div class="action-row">
+          <label class="toggle compact" title="Toggle status">
+            <input type="checkbox" ${o.is_active ? 'checked' : ''} onchange="toggleOnboardingStatus(${o.id}, this.checked)">
+            <span class="toggle-slider"></span>
+          </label>
+          <span class="status-pill ${o.is_active ? 'active' : 'inactive'}"><span class="status-dot"></span>${statusText}</span>
+        </div>
+      </td>
+      <td>
+        <div class="action-row">
+          <button class="btn btn-sm btn-danger btn-icon" title="Delete" onclick="deleteOnboarding(${o.id},'${escapeHtml(o.title||'Onboarding').replace(/'/g,"\\'")}')"><i class="bi bi-trash"></i></button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function toggleOnboardingStatus(id, is_active){
+  const r = await apiPatch(`/manage-roles/screen-onboarding/${id}/`, {is_active});
+  if(r && r.ok){ toast(`Onboarding ${is_active?'activated':'deactivated'}`,'success'); await loadOnboarding(); }
+  else { toast('Failed to update onboarding status','error'); await loadOnboarding(); }
+}
+
+async function deleteOnboarding(id, title){
+  if(!confirm(`Delete onboarding "${title}"? This will remove it from the list.`)) return;
+  const r = await apiDelete(`/manage-roles/screen-onboarding/${id}/`);
+  if(r && (r.ok || r.status===204)){ toast('Onboarding deleted','success'); await loadOnboarding(); }
+  else toast('Failed to delete onboarding','error');
+}
+
+async function addOnboarding(){
+  const fileInput = document.getElementById('ob-img');
+  const file = fileInput.files && fileInput.files[0];
+  const title = document.getElementById('ob-title').value.trim();
+  const sort_order = parseInt(document.getElementById('ob-sort').value || '0');
+  const is_active = document.getElementById('ob-active').checked;
+
+  if(!file){ toast('Please select an image','error'); return; }
+
+  const form = new FormData();
+  form.append('image', file);
+  form.append('title', title);
+  form.append('sort_order', sort_order);
+  form.append('is_active', is_active);
+
+  const token = localStorage.getItem('admin_access') || '';
+  const res = await fetch(API_BASE + '/manage-roles/screen-onboarding/', {
+    method:'POST',
+    headers:{'Authorization':'Bearer '+token},
+    body: form
+  });
+
+  if(res.ok){ toast('Onboarding image added','success'); closeModal('addOnboardingModal'); resetOnboardingModal(); await loadOnboarding(); }
+  else {
+    let txt='Error';
+    try{ txt = await res.text(); }catch(e){}
+    toast(txt,'error');
+  }
+}
+
 async function editProduct(id) { toast('Product edit coming soon','info'); }
 function downloadCSV() { toast('Downloading inventory...','info'); }
+
 
 document.getElementById('c-name').addEventListener('input', () => {
   const slugEl = document.getElementById('c-slug');
@@ -341,6 +480,7 @@ document.getElementById('c-name').addEventListener('input', () => {
 });
 document.getElementById('c-slug').addEventListener('input', e => { e.target.dataset.touched = '1'; });
 
-(async()=>{ await Promise.all([loadCategories(), loadInventoryStats()]); loadProducts(1); })();
+(async()=>{ await Promise.all([loadCategories(), loadInventoryStats(), loadOnboarding()]); loadProducts(1); })();
+
 </script>
 {% endblock %}

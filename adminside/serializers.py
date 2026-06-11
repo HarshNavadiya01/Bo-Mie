@@ -3,7 +3,8 @@ from django.utils.text import slugify
 
 from rest_framework import serializers
 
-from .models import Admin, AdminProfile, Category, Employee, Order, Product, Role, Supplier
+from .models import Admin, AdminProfile, Category, Employee, Order, Product, Role, Supplier, ScreenOnboarding
+
 
 
 class RoleSerializer(serializers.ModelSerializer):
@@ -63,7 +64,30 @@ class AdminChangePasswordSerializer(serializers.Serializer):
 
 class BaseSoftDeleteSerializer(serializers.ModelSerializer):
     class Meta:
-        fields = "__all__"
+        # Must be a tuple (not a string like "__all__") because child serializers
+        # concatenate extra fields using + (...,).
+        fields = (
+            "id",
+            "created_at",
+            "updated_at",
+            "deleted_at",
+            "name",
+            "slug",
+            "permission",
+            "role",
+            "email",
+            "phone",
+            "status",
+            "is_admin",
+            "availability",
+            "order_value",
+            "quantity",
+            "reorder_level",
+            "category",
+            "supplier",
+            "assigned_employee",
+            "image",
+        )
         read_only_fields = ("id", "created_at", "updated_at", "deleted_at")
 
 
@@ -108,8 +132,27 @@ class ProductSerializer(BaseSoftDeleteSerializer):
     category_name = serializers.CharField(source="category.name", read_only=True)
     supplier_name = serializers.CharField(source="supplier.name", read_only=True, default=None)
 
+    # Return absolute URLs for images to avoid broken paths
+    image_url = serializers.SerializerMethodField(read_only=True)
+
     class Meta(BaseSoftDeleteSerializer.Meta):
         model = Product
+        fields = BaseSoftDeleteSerializer.Meta.fields + (
+            "stock_status",
+            "category_name",
+            "supplier_name",
+            "image_url",
+        )
+
+    def get_image_url(self, obj):
+        request = self.context.get("request")
+        if not obj.image:
+            return None
+        url = obj.image.url
+        if request is not None:
+            return request.build_absolute_uri(url)
+        return url
+
 
 
 class EmployeeSerializer(BaseSoftDeleteSerializer):
@@ -129,6 +172,12 @@ class AdminProfileSerializer(BaseSoftDeleteSerializer):
     class Meta(BaseSoftDeleteSerializer.Meta):
         model = AdminProfile
 
+
+class ScreenOnboardingSerializer(BaseSoftDeleteSerializer):
+    class Meta(BaseSoftDeleteSerializer.Meta):
+        model = ScreenOnboarding
+
+    image = serializers.ImageField(allow_null=True, required=False)
 
 class DashboardSerializer(serializers.Serializer):
     total_sales = serializers.DecimalField(max_digits=12, decimal_places=2)

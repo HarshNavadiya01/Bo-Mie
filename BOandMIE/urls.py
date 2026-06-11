@@ -27,3 +27,6 @@ urlpatterns = [
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+# In DEBUG-less (production) environments, serve MEDIA via your web server (nginx/apache).
+

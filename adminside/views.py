@@ -13,9 +13,11 @@ from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
 from .authentication import AdminJWTAuthentication
-from .models import Admin, AdminProfile, Category, Employee, Order, Product, Role, Supplier
+from .models import Admin, AdminProfile, Category, Employee, Order, Product, Role, Supplier, ScreenOnboarding
+
 from .permissions import HasRolePermission, IsRoleAdmin
 from .serializers import (
+
     AdminChangePasswordSerializer,
     AdminForgotPasswordSerializer,
     AdminLoginSerializer,
@@ -28,8 +30,10 @@ from .serializers import (
     ProductSerializer,
     RoleListSerializer,
     RoleSerializer,
+    ScreenOnboardingSerializer,
     SupplierSerializer,
 )
+
 
 # Page → template mapping
 PAGE_TEMPLATES = {
@@ -134,7 +138,15 @@ class AdminProfileViewSet(SoftDeleteModelViewSet):
     permission_classes = [IsAuthenticated]
 
 
+class ScreenOnboardingViewSet(SoftDeleteModelViewSet):
+    queryset = ScreenOnboarding.objects.all()
+    serializer_class = ScreenOnboardingSerializer
+    authentication_classes = [AdminJWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+
 class DashboardMetricsAPIView(APIView):
+
     authentication_classes = [AdminJWTAuthentication]
     permission_classes = [IsAuthenticated]
 
