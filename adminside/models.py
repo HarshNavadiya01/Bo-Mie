@@ -89,6 +89,7 @@ class Supplier(BaseModel):
 
 
 class Product(BaseModel):
+
     UNIT_CHOICES = [
         ("piece", "Piece"),
         ("kg", "Kilogram"),
@@ -103,7 +104,9 @@ class Product(BaseModel):
     buying_price = models.DecimalField(max_digits=10, decimal_places=2)
     quantity = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     unit = models.CharField(max_length=20, choices=UNIT_CHOICES)
-    image = models.ImageField(upload_to="./static/images/products/", null=True, blank=True)
+    # Images are uploaded to MEDIA_ROOT (not STATIC)
+    image = models.ImageField(upload_to="products/", null=True, blank=True)
+
     opening_stock = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     stock_on_way = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     is_active = models.BooleanField(default=True)
@@ -150,3 +153,33 @@ class AdminProfile(BaseModel):
     user_id = models.CharField(max_length=80)
     notifications_enabled = models.BooleanField(default=True)
     location_enabled = models.BooleanField(default=False)
+
+
+class ScreenOnboarding(BaseModel):
+    """Images for the onboarding/start screen shown to users in the mobile app."""
+
+    image = models.ImageField(upload_to="screen_onboarding/", null=True, blank=True)
+    title = models.CharField(max_length=200, blank=True)
+    sort_order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["sort_order", "id"]
+        indexes = [models.Index(fields=["is_active", "sort_order"])]
+
+    def __str__(self):
+        return self.title or f"Onboarding #{self.id}"
+    
+class Store(BaseModel):
+    name = models.CharField(max_length=200)
+    address = models.TextField()
+    city = models.CharField(max_length=100)
+    latitude = models.DecimalField(max_digits=9, decimal_places=6)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6)
+    phone = models.CharField(max_length=20)
+    opening_time = models.TimeField()
+    closing_time = models.TimeField()
+    is_active = models.BooleanField(default=True)
+    supports_takeaway = models.BooleanField(default=False)
+    supports_dine_in = models.BooleanField(default=False)
+    image = models.ImageField(upload_to="stores/", null=True, blank=True)
