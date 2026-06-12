@@ -106,6 +106,14 @@ class Supplier(BaseModel):
         return f"{self.name} ({self.code})"
 
 class Product(BaseModel):
+    UNIT_CHOICES = [
+        ("piece", "Piece"),
+        ("kg", "Kilogram"),
+        ("g", "Gram"),
+        ("l", "Liter"),
+        ("ml", "Milliliter"),
+    ]
+    
     name = models.CharField(max_length=150)
     product_id = models.CharField(
         max_length=50,
@@ -139,6 +147,10 @@ class Product(BaseModel):
     )
     app_rating = models.FloatField(default=0.0)
     is_vegetarian = models.BooleanField(default=False)
+    unit = models.CharField(max_length=20, choices=UNIT_CHOICES, default="piece")
+    reorder_level = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    opening_stock = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    stock_on_way = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     # --- Catering module fields ---
     is_catering = models.BooleanField(default=False)

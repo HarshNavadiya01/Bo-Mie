@@ -12,7 +12,9 @@ from .views import (
     AdminTokenRefreshAPIView,
     AdminUserViewSet,
     ScreenOnboardingViewSet,
-
+    EmployeeViewSet,
+    AmenityViewSet,
+    StoreViewSet,
     CategoryViewSet,
     DashboardMetricsAPIView,
     EmployeeViewSet,
@@ -24,13 +26,15 @@ from .views import (
 
 router = DefaultRouter()
 router.register(r"role", RoleView, basename="role")
+router.register(r"stores", StoreViewSet, basename="stores")
 router.register(r"admins", AdminUserViewSet, basename="admins")
-router.register(r"categories", CategoryViewSet, basename="categories")
-router.register(r"sub-categories", SubCategoryViewSet, basename="sub-categories")
-router.register(r"suppliers", SupplierViewSet, basename="suppliers")
 router.register(r"products", ProductViewSet, basename="products")
+router.register(r"amenities", AmenityViewSet, basename="amenities")
+router.register(r"suppliers", SupplierViewSet, basename="suppliers")
 router.register(r"employees", EmployeeViewSet, basename="employees")
 router.register(r"profiles", AdminProfileViewSet, basename="profiles")
+router.register(r"categories", CategoryViewSet, basename="categories")
+router.register(r"sub-categories", SubCategoryViewSet, basename="sub-categories")
 router.register(r"screen-onboarding", ScreenOnboardingViewSet, basename="screen-onboarding")
 
 

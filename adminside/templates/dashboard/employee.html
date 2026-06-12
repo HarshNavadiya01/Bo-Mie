@@ -24,7 +24,7 @@
         <option value="unavailable">Unavailable</option>
       </select>
       <button class="btn btn-outline btn-sm" onclick="toast('Downloading...','info')"><i class="bi bi-download"></i> Download all</button>
-      <button class="btn btn-primary btn-sm" onclick="openModal('addEmpModal')"><i class="bi bi-plus-lg"></i> Add Employee</button>
+      <button class="btn btn-primary btn-sm" onclick="openEmployeeModal()"><i class="bi bi-plus-lg"></i> Add Employee</button>
     </div>
   </div>
   <div class="table-wrap">
@@ -46,7 +46,7 @@
 <div class="modal-overlay" id="addEmpModal">
   <div class="modal">
     <div class="modal-header">
-      <h5>New Employee</h5>
+      <h5 id="emp-modal-title">New Employee</h5>
       <button class="modal-close" onclick="closeModal('addEmpModal')"><i class="bi bi-x"></i></button>
     </div>
     <div class="modal-body">
@@ -70,7 +70,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('addEmpModal')">Discard</button>
-      <button class="btn btn-primary" onclick="addEmployee()">Add Employee</button>
+      <button class="btn btn-primary" onclick="saveEmployee()" id="emp-save-btn">Add Employee</button>
     </div>
   </div>
 </div>
@@ -78,7 +78,7 @@
 
 {% block js %}
 <script>
-let ePage=1, eTotal=0, eSize=10;
+let ePage=1, eTotal=0, eSize=10, employeeCache=[];
 
 function previewEmpAvatar(input){
   if(!input.files||!input.files[0]) return;
@@ -111,6 +111,7 @@ async function loadEmployees(page=1) {
   const tbody=document.getElementById('emp-tbody');
   if(!data){tbody.innerHTML='<tr class="empty-row"><td colspan="6">Failed to load</td></tr>';return;}
   const items=data.results||[];
+  employeeCache=items;
   eTotal=data.count||0;
   if(!items.length){tbody.innerHTML='<tr class="empty-row"><td colspan="6">No employees found</td></tr>';updateEmpPag();return;}
   tbody.innerHTML=items.map(e=>`<tr>
@@ -123,7 +124,7 @@ async function loadEmployees(page=1) {
     <td>${fmtNum(e.delivered_orders)}</td>
     <td><span class="badge ${e.availability==='available'?'badge-green':'badge-red'}">${e.availability==='available'?'Available':'Unavailable'}</span></td>
     <td>
-      <button class="btn btn-sm btn-outline btn-icon" onclick="editEmployee(${e.id},'${e.availability}')"><i class="bi bi-pencil"></i></button>
+      <button class="btn btn-sm btn-outline btn-icon" onclick="editEmployee(${e.id})"><i class="bi bi-pencil"></i></button>
       <button class="btn btn-sm btn-danger btn-icon" onclick="deleteEmployee(${e.id},'${e.name.replace(/'/g,"\\'")}')"><i class="bi bi-trash"></i></button>
     </td>
   </tr>`).join('');
@@ -138,23 +139,73 @@ function updateEmpPag(){
 }
 function changeEmpPage(d){loadEmployees(ePage+d);}
 
-async function addEmployee(){
+function resetEmployeeForm(){
+  document.getElementById('e-id').value='';
+  document.getElementById('e-name').value='';
+  document.getElementById('e-contact').value='';
+  document.getElementById('e-email').value='';
+  document.getElementById('e-avail').value='available';
+  document.getElementById('emp-img').value='';
+  document.getElementById('emp-av-icon').style.display='block';
+  const img=document.getElementById('emp-av-preview');
+  img.removeAttribute('src'); img.style.display='none';
+  document.getElementById('emp-modal-title').textContent='New Employee';
+  document.getElementById('emp-save-btn').textContent='Add Employee';
+}
+
+function openEmployeeModal(){
+  resetEmployeeForm();
+  openModal('addEmpModal');
+}
+
+async function saveEmployee(){
+  const id=document.getElementById('e-id').value;
   const name=document.getElementById('e-name').value.trim();
   const contact=document.getElementById('e-contact').value.trim();
   const email=document.getElementById('e-email').value.trim();
   const avail=document.getElementById('e-avail').value;
   if(!name||!contact||!email){toast('Please fill all required fields','error');return;}
-  const r=await apiPost('/manage-roles/employees/',{name,contact_number:contact,email,availability:avail});
-  if(r&&r.ok){toast('Employee added successfully','success');closeModal('addEmpModal');loadEmployees(1);loadEmpStats();}
-  else{const d=await r?.json();toast(JSON.stringify(d?.detail||d||'Error'),'error');}
+  const form=new FormData();
+  form.append('name',name);
+  form.append('contact_number',contact);
+  form.append('email',email);
+  form.append('availability',avail);
+  const file=document.getElementById('emp-img').files?.[0];
+  if(file) form.append('image',file);
+  const r=await apiForm(id?`/manage-roles/employees/${id}/`:'/manage-roles/employees/',form,id?'PATCH':'POST');
+  if(r&&r.ok){toast(id?'Employee updated successfully':'Employee added successfully','success');closeModal('addEmpModal');resetEmployeeForm();loadEmployees(id?ePage:1);loadEmpStats();}
+  else toast(await employeeErrorText(r,'Could not save employee'),'error');
 }
 
-async function editEmployee(id,avail){
-  const newAvail=avail==='available'?'unavailable':'available';
-  const r=await apiPatch(`/manage-roles/employees/${id}/`,{availability:newAvail});
-  if(r&&r.ok){toast('Employee updated','success');loadEmployees(ePage);}
-  else toast('Failed to update','error');
+async function employeeErrorText(res, fallback){
+  if(!res) return fallback;
+  const text=await res.text();
+  try{
+    const data=JSON.parse(text);
+    if(data.detail) return data.detail;
+    return Object.entries(data).map(([field,msg])=>`${field}: ${Array.isArray(msg)?msg.join(', '):msg}`).join(' | ') || fallback;
+  }catch(e){return text||fallback;}
 }
+
+function editEmployee(id){
+  const emp=employeeCache.find(x=>x.id===id);
+  if(!emp) return;
+  resetEmployeeForm();
+  document.getElementById('e-id').value=emp.id;
+  document.getElementById('e-name').value=emp.name||'';
+  document.getElementById('e-contact').value=emp.contact_number||'';
+  document.getElementById('e-email').value=emp.email||'';
+  document.getElementById('e-avail').value=emp.availability||'available';
+  if(emp.image_url||emp.image){
+    document.getElementById('emp-av-icon').style.display='none';
+    const img=document.getElementById('emp-av-preview');
+    img.src=emp.image_url||emp.image; img.style.display='block';
+  }
+  document.getElementById('emp-modal-title').textContent='Edit Employee';
+  document.getElementById('emp-save-btn').textContent='Update Employee';
+  openModal('addEmpModal');
+}
+
 
 async function deleteEmployee(id,name){
   if(!confirm(`Delete "${name}"?`))return;

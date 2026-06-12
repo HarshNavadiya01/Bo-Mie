@@ -84,6 +84,7 @@ async function loadProfile(){
     document.getElementById('pf-name').value=info.name||'';
     document.getElementById('pf-email').value=info.email||'';
     document.getElementById('pf-phone').value=info.phone||'';
+    document.getElementById('pf-code').value=info.country_code||'+91';
     document.getElementById('pf-name-display').textContent=info.name||'Admin';
     document.getElementById('pf-role-display').textContent=info.role_name||'Administrator';
     document.getElementById('profile-avatar').src=`https://ui-avatars.com/api/?name=${encodeURIComponent(info.name)}&background=343434&color=fff&size=160`;
@@ -107,7 +108,7 @@ async function saveProfile(){
   // Update admin if ID known
   const info=JSON.parse(localStorage.getItem('admin_info')||'{}');
   if(info.id){
-    const body={name,email};
+    const body={name,email,country_code:document.getElementById('pf-code').value.trim()};
     const phone=document.getElementById('pf-phone').value.trim();
     if(phone) body.phone=phone;
     const pass=document.getElementById('pf-pass').value;
