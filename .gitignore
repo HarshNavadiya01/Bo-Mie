@@ -11,6 +11,7 @@ env/
 *.log
 staticfiles/
 /uploads
+/media
 
 # Environment variables
 .env
