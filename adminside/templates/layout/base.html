@@ -79,6 +79,23 @@ async function apiDelete(path) {
   return r;
 }
 
+async function apiForm(path, form, method='POST') {
+  if (!_access) { window.location.href = '/api/v1/admin/login/'; return null; }
+  let res = await fetch(API_BASE + path, {method, headers:{'Authorization':'Bearer '+_access}, body: form});
+  if (res.status === 401 && _refresh) {
+    const r2 = await fetch(API_BASE+'/auth/refresh/', {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+_refresh}});
+    if (r2.ok) {
+      const d = await r2.json();
+      _access = d.access; _refresh = d.refresh||_refresh;
+      localStorage.setItem('admin_access',_access);
+      if(d.refresh) localStorage.setItem('admin_refresh',d.refresh);
+      return apiForm(path, form, method);
+    }
+    doLogout(); return null;
+  }
+  return res;
+}
+
 function toast(msg, type='info') {
   const el = document.createElement('div');
   el.className = 'toast '+type;

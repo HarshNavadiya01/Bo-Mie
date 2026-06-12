@@ -56,7 +56,7 @@ class Category(BaseModel):
     slug = models.SlugField(unique=True)
     description = models.TextField(blank=True)
     image = models.ImageField(
-        upload_to="categories/",
+        upload_to="images/category/",
         null=True,
         blank=True
     )
@@ -74,7 +74,7 @@ class SubCategory(BaseModel):
     )
     name = models.CharField(max_length=255)
     image = models.ImageField(
-        upload_to="sub_categories/",
+        upload_to="images/subcategory/",
         null=True,
         blank=True
     )
@@ -128,7 +128,7 @@ class Product(BaseModel):
         default=0
     )
     image = models.ImageField(
-        upload_to="products/",
+        upload_to="images/product/",
         null=True,
         blank=True
     )
@@ -162,15 +162,6 @@ class Product(BaseModel):
         if self.quantity <= self.reorder_level:
             return "low_stock"
         return "in_stock"
-    
-class Employee(BaseModel):
-    AVAILABILITY_CHOICES = [("available", "Available"), ("unavailable", "Unavailable")]
-    name = models.CharField(max_length=120)
-    contact_number = models.CharField(max_length=20)
-    email = models.EmailField(unique=True)
-    availability = models.CharField(max_length=20, choices=AVAILABILITY_CHOICES, default="available")
-    delivered_orders = models.PositiveIntegerField(default=0)
-    image = models.ImageField(upload_to="employees/", null=True, blank=True)
 
 class AdminProfile(BaseModel):
     admin = models.OneToOneField(Admin, on_delete=models.CASCADE, related_name="profile")
@@ -181,7 +172,7 @@ class AdminProfile(BaseModel):
 class ScreenOnboarding(BaseModel):
     """Images for the onboarding/start screen shown to users in the mobile app."""
 
-    image = models.ImageField(upload_to="screen_onboarding/", null=True, blank=True)
+    image = models.ImageField(upload_to="images/onboarding/", null=True, blank=True)
     title = models.CharField(max_length=200, blank=True)
     sort_order = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
@@ -318,3 +309,14 @@ class CustomizationOption(BaseModel):
 
     class Meta:
         db_table = "customization_options"
+        
+class Employee(BaseModel):
+    AVAILABILITY_CHOICES = [("available", "Available"), ("unavailable", "Unavailable")]
+    name = models.CharField(max_length=120)
+    store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name="employees", null=True)
+    contact_number = models.CharField(max_length=20)
+    email = models.EmailField(unique=True)
+    availability = models.CharField(max_length=20, choices=AVAILABILITY_CHOICES, default="available")
+    delivered_orders = models.PositiveIntegerField(default=0)
+    image = models.ImageField(upload_to="images/employees/", null=True, blank=True)
+    

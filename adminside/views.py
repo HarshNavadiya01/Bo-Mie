@@ -4,6 +4,7 @@ from django.shortcuts import render, redirect
 from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
+
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -11,9 +12,12 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
+from rest_framework.decorators import action
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 
 from .authentication import AdminJWTAuthentication
-from .models import Admin, AdminProfile, Category, Employee, Product, Role, Supplier, ScreenOnboarding
+from .models import (Admin, AdminProfile, Category, Employee, Product, Role, Supplier,
+                     ScreenOnboarding, SubCategory)
 
 from .permissions import HasRolePermission, IsRoleAdmin
 from .serializers import (
@@ -31,6 +35,7 @@ from .serializers import (
     RoleSerializer,
     ScreenOnboardingSerializer,
     SupplierSerializer,
+    SubCategorySerializer
 )
 
 
@@ -46,6 +51,8 @@ PAGE_TEMPLATES = {
 
 
 class SoftDeleteModelViewSet(ModelViewSet):
+    parser_classes = [JSONParser, MultiPartParser, FormParser]
+
     def get_queryset(self):
         qs = self.queryset
         if self.request.query_params.get("include_deleted") != "true":
@@ -53,8 +60,12 @@ class SoftDeleteModelViewSet(ModelViewSet):
         return qs
 
     def perform_destroy(self, instance):
+        image = getattr(instance, "image", None)
+        if image:
+            image.delete(save=False)
         instance.deleted_at = timezone.now()
         instance.save(update_fields=["deleted_at", "updated_at"])
+
 
 
 class RoleView(SoftDeleteModelViewSet):
@@ -80,6 +91,37 @@ class CategoryViewSet(SoftDeleteModelViewSet):
     authentication_classes = [AdminJWTAuthentication]
     permission_classes = [IsAuthenticated]
 
+    @action(detail=True, methods=["patch"], url_path="toggle-status")
+    def toggle_status(self, request, pk=None):
+        category = self.get_object()
+        category.is_active = not category.is_active
+        category.save(update_fields=["is_active", "updated_at"])
+        return Response(self.get_serializer(category).data)
+
+
+class SubCategoryViewSet(SoftDeleteModelViewSet):
+    queryset = SubCategory.objects.select_related("parent")
+    serializer_class = SubCategorySerializer
+    authentication_classes = [AdminJWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        parent = self.request.query_params.get("parent") or self.request.query_params.get("category")
+        if parent:
+            qs = qs.filter(parent_id=parent)
+        status_value = self.request.query_params.get("status")
+        if status_value:
+            qs = qs.filter(status=status_value)
+        return qs
+
+    @action(detail=True, methods=["patch"], url_path="toggle-status")
+    def toggle_status(self, request, pk=None):
+        sub_category = self.get_object()
+        sub_category.status = "inactive" if sub_category.status == "active" else "active"
+        sub_category.save(update_fields=["status", "updated_at"])
+        return Response(self.get_serializer(sub_category).data)
+
 
 class SupplierViewSet(SoftDeleteModelViewSet):
     queryset = Supplier.objects.all()
@@ -89,7 +131,7 @@ class SupplierViewSet(SoftDeleteModelViewSet):
 
 
 class ProductViewSet(SoftDeleteModelViewSet):
-    queryset = Product.objects.select_related("category", "supplier")
+    queryset = Product.objects.select_related("sub_category", "sub_category__parent")
     serializer_class = ProductSerializer
     authentication_classes = [AdminJWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -98,8 +140,12 @@ class ProductViewSet(SoftDeleteModelViewSet):
         qs = super().get_queryset()
         cat = self.request.query_params.get("category")
         if cat:
-            qs = qs.filter(category_id=cat)
+            qs = qs.filter(sub_category__parent_id=cat)
+        sub_cat = self.request.query_params.get("sub_category")
+        if sub_cat:
+            qs = qs.filter(sub_category_id=sub_cat)
         return qs
+
 
 
 class EmployeeViewSet(SoftDeleteModelViewSet):
