@@ -3,7 +3,8 @@ from django.utils.text import slugify
 
 from rest_framework import serializers
 
-from .models import Admin, AdminProfile, Category, Employee, Order, Product, Role, Supplier, ScreenOnboarding
+from .models import Admin, AdminProfile, Category, Employee, Product, Role, Supplier, ScreenOnboarding
+from userside.models import Order
 
 
 
@@ -158,15 +159,6 @@ class ProductSerializer(BaseSoftDeleteSerializer):
 class EmployeeSerializer(BaseSoftDeleteSerializer):
     class Meta(BaseSoftDeleteSerializer.Meta):
         model = Employee
-
-
-class OrderSerializer(BaseSoftDeleteSerializer):
-    product_name = serializers.CharField(source="product.name", read_only=True)
-    employee_name = serializers.CharField(source="assigned_employee.name", read_only=True, default=None)
-
-    class Meta(BaseSoftDeleteSerializer.Meta):
-        model = Order
-
 
 class AdminProfileSerializer(BaseSoftDeleteSerializer):
     class Meta(BaseSoftDeleteSerializer.Meta):

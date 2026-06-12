@@ -21,7 +21,7 @@ from django.contrib import admin
 from django.urls import include, path
 
 urlpatterns = [
-    path('platform-admin/', admin.site.urls),
+    # path('platform-admin/', admin.site.urls),
     path('api/v1/admin/', include('adminside.urls'))
 ]
 
@@ -29,4 +29,3 @@ if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # In DEBUG-less (production) environments, serve MEDIA via your web server (nginx/apache).
-

@@ -16,7 +16,6 @@ from .views import (
     CategoryViewSet,
     DashboardMetricsAPIView,
     EmployeeViewSet,
-    OrderViewSet,
     ProductViewSet,
     RoleView,
     SupplierViewSet,
@@ -29,7 +28,6 @@ router.register(r"categories", CategoryViewSet, basename="categories")
 router.register(r"suppliers", SupplierViewSet, basename="suppliers")
 router.register(r"products", ProductViewSet, basename="products")
 router.register(r"employees", EmployeeViewSet, basename="employees")
-router.register(r"orders", OrderViewSet, basename="orders")
 router.register(r"profiles", AdminProfileViewSet, basename="profiles")
 router.register(r"screen-onboarding", ScreenOnboardingViewSet, basename="screen-onboarding")
 
