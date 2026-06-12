@@ -16,7 +16,7 @@ from rest_framework.decorators import action
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 
 from .authentication import AdminJWTAuthentication
-from .models import (Admin, AdminProfile, Category, Employee, Product, Role, Supplier,
+from .models import (Admin, Category, Employee, Product, Role, Supplier,
                      ScreenOnboarding, SubCategory, Store, Amenity)
 
 from .permissions import HasRolePermission, IsRoleAdmin
@@ -183,11 +183,11 @@ class EmployeeViewSet(SoftDeleteModelViewSet):
             qs = qs.filter(availability=avail)
         return qs
 
-class AdminProfileViewSet(SoftDeleteModelViewSet):
-    queryset = AdminProfile.objects.select_related("admin")
-    serializer_class = AdminProfileSerializer
-    authentication_classes = [AdminJWTAuthentication]
-    permission_classes = [IsAuthenticated]
+# class AdminProfileViewSet(SoftDeleteModelViewSet):
+#     queryset = AdminProfile.objects.select_related("admin")
+#     serializer_class = AdminProfileSerializer
+#     authentication_classes = [AdminJWTAuthentication]
+#     permission_classes = [IsAuthenticated]
 
 
 class ScreenOnboardingViewSet(SoftDeleteModelViewSet):

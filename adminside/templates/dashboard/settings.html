@@ -9,11 +9,11 @@
 
 <div class="profile-page-card">
   <div class="profile-top">
-    <div style="position:relative;display:inline-block">
+    {% comment %} <div style="position:relative;display:inline-block">
       <img id="profile-avatar" src="https://ui-avatars.com/api/?name=Admin&background=343434&color=fff&size=160" class="profile-av-lg" alt="Profile"/>
       <button onclick="document.getElementById('av-file').click()" style="position:absolute;bottom:2px;right:2px;width:26px;height:26px;border-radius:50%;background:var(--brand);border:none;color:var(--white);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px"><i class="bi bi-camera"></i></button>
       <input type="file" id="av-file" style="display:none" accept="image/*" onchange="previewAvatar(this)"/>
-    </div>
+    </div> {% endcomment %}
     <div>
       <div class="profile-name" id="pf-name-display">Admin</div>
       <div class="profile-role" id="pf-role-display">Administrator</div>
@@ -41,7 +41,7 @@
     </div>
   </div>
 
-  <div style="border-top:1px solid var(--gray-100);padding-top:20px;margin-bottom:20px">
+  {% comment %} <div style="border-top:1px solid var(--gray-100);padding-top:20px;margin-bottom:20px">
     <div style="font-size:13px;font-weight:600;color:var(--gray-700);margin-bottom:14px">Preferences</div>
     <div class="toggle-wrap">
       <div class="toggle-info"><h6>Notifications</h6><p>Receive app notifications</p></div>
@@ -51,7 +51,7 @@
       <div class="toggle-info"><h6>Location</h6><p>Enable location access</p></div>
       <label class="toggle"><input type="checkbox" id="pf-loc"/><span class="toggle-slider"></span></label>
     </div>
-  </div>
+  </div> {% endcomment %}
 
   <div style="display:flex;justify-content:flex-end;gap:10px">
     <button class="btn btn-secondary" onclick="loadProfile()">Reset</button>

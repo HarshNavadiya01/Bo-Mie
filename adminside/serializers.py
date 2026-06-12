@@ -5,7 +5,7 @@ from django.utils.text import slugify
 
 from rest_framework import serializers
 
-from .models import (Admin, AdminProfile, Category, Employee, Product,
+from .models import (Admin, Category, Employee, Product,
                      Role, ScreenOnboarding, SubCategory, Supplier,
                      Amenity, Store)
 from userside.models import Order

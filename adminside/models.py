@@ -174,12 +174,6 @@ class Product(BaseModel):
             return "low_stock"
         return "in_stock"
 
-class AdminProfile(BaseModel):
-    admin = models.OneToOneField(Admin, on_delete=models.CASCADE, related_name="profile")
-    user_id = models.CharField(max_length=80)
-    notifications_enabled = models.BooleanField(default=True)
-    location_enabled = models.BooleanField(default=False)
-
 class ScreenOnboarding(BaseModel):
     """Images for the onboarding/start screen shown to users in the mobile app."""
 
