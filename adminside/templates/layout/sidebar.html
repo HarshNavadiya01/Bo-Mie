@@ -7,16 +7,28 @@
   </div>
   <nav class="sidebar-nav">
     <span class="nav-section-label">Main Menu</span>
-    <a href="/api/v1/admin/ui/dashboard/" class="nav-item" data-page="dashboard">
+    <a
+      href="/api/v1/admin/ui/dashboard/"
+      class="nav-item"
+      data-page="dashboard"
+    >
       <i class="bi bi-grid-1x2"></i> Dashboard
     </a>
-    <a href="/api/v1/admin/ui/inventory/" class="nav-item" data-page="inventory">
+    <a
+      href="/api/v1/admin/ui/inventory/"
+      class="nav-item"
+      data-page="inventory"
+    >
       <i class="bi bi-box-seam"></i> Inventory
     </a>
     <a href="/api/v1/admin/ui/reports/" class="nav-item" data-page="reports">
       <i class="bi bi-graph-up-arrow"></i> Reports
     </a>
-    <a href="/api/v1/admin/ui/employees/" class="nav-item" data-page="employees">
+    <a
+      href="/api/v1/admin/ui/employees/"
+      class="nav-item"
+      data-page="employees"
+    >
       <i class="bi bi-people"></i> Employee Reports
     </a>
     <a href="/api/v1/admin/ui/stores/" class="nav-item" data-page="stores">
@@ -36,13 +48,19 @@
   </div>
 </div>
 <script>
-function confirmLogout() {
-  if(confirm('Are you sure you want to log out?')) {
-    const ref = localStorage.getItem('admin_refresh');
-    if(ref) {
-      fetch('/api/v1/admin/auth/logout/', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+ref}});
+  function confirmLogout() {
+    if (confirm("Are you sure you want to log out?")) {
+      const ref = localStorage.getItem("admin_refresh");
+      if (ref) {
+        fetch("/api/v1/admin/auth/logout/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + ref,
+          },
+        });
+      }
+      doLogout();
     }
-    doLogout();
   }
-}
 </script>
