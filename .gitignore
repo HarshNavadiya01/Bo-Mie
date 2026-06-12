@@ -10,7 +10,8 @@ env/
 # Django
 *.log
 staticfiles/
-media/
+/uploads
+BOandMIE/uploads
 
 # Environment variables
 .env
