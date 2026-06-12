@@ -86,7 +86,12 @@ function applyAdminInfo(info){
   document.getElementById('pf-phone').value=info.phone||'';
   document.getElementById('pf-name-display').textContent=info.name||'Admin';
   document.getElementById('pf-role-display').textContent=info.role_name||'Administrator';
-  document.getElementById('profile-avatar').src=`https://ui-avatars.com/api/?name=${encodeURIComponent(info.name||'Admin')}&background=343434&color=fff&size=160`;
+  const avatarEl=document.getElementById('profile-avatar');
+  if(info.image_url){
+    avatarEl.src=info.image_url;
+  } else {
+    avatarEl.src=`https://ui-avatars.com/api/?name=${encodeURIComponent(info.name||'Admin')}&background=343434&color=fff&size=160`;
+  }
 }
 
 async function apiErrorText(res, fallback){
@@ -109,6 +114,7 @@ async function loadProfile(){
       localStorage.setItem('admin_info',JSON.stringify(info));
       applyAdminInfo(info);
     }
+  }
   // Load profiles from API
   const data=await apiGet('/manage-roles/profiles/?page_size=1');
   if(data&&data.results&&data.results.length){
