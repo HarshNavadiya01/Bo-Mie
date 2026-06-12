@@ -17,7 +17,7 @@ from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 
 from .authentication import AdminJWTAuthentication
 from .models import (Admin, AdminProfile, Category, Employee, Product, Role, Supplier,
-                     ScreenOnboarding, SubCategory)
+                     ScreenOnboarding, SubCategory, Store, Amenity)
 
 from .permissions import HasRolePermission, IsRoleAdmin
 from .serializers import (
@@ -26,7 +26,6 @@ from .serializers import (
     AdminForgotPasswordSerializer,
     AdminLoginSerializer,
     AdminProfileSerializer,
-    AdminUserSerializer,
     CategorySerializer,
     DashboardSerializer,
     EmployeeSerializer,
@@ -35,7 +34,9 @@ from .serializers import (
     RoleSerializer,
     ScreenOnboardingSerializer,
     SupplierSerializer,
-    SubCategorySerializer
+    SubCategorySerializer,
+    AmenitySerializer,
+    StoreSerializer,
 )
 
 
@@ -47,6 +48,7 @@ PAGE_TEMPLATES = {
     "employees": "dashboard/employee.html",
     "orders":    "dashboard/orders.html",
     "settings":  "dashboard/settings.html",
+    "stores":    "dashboard/stores.html",
 }
 
 
@@ -80,7 +82,7 @@ class RoleView(SoftDeleteModelViewSet):
 
 class AdminUserViewSet(SoftDeleteModelViewSet):
     queryset = Admin.objects.select_related("role")
-    serializer_class = AdminUserSerializer
+    serializer_class = AdminProfileSerializer
     authentication_classes = [AdminJWTAuthentication]
     permission_classes = [IsAuthenticated, HasRolePermission]
 
@@ -129,6 +131,26 @@ class SupplierViewSet(SoftDeleteModelViewSet):
     authentication_classes = [AdminJWTAuthentication]
     permission_classes = [IsAuthenticated]
 
+
+class AmenityViewSet(SoftDeleteModelViewSet):
+    queryset = Amenity.objects.all()
+    serializer_class = AmenitySerializer
+    authentication_classes = [AdminJWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+
+class StoreViewSet(SoftDeleteModelViewSet):
+    queryset = Store.objects.prefetch_related("amenities")
+    serializer_class = StoreSerializer
+    authentication_classes = [AdminJWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    @action(detail=True, methods=["patch"], url_path="toggle-status")
+    def toggle_status(self, request, pk=None):
+        store = self.get_object()
+        store.is_active = not store.is_active
+        store.save(update_fields=["is_active", "updated_at"])
+        return Response(self.get_serializer(store).data)
 
 class ProductViewSet(SoftDeleteModelViewSet):
     queryset = Product.objects.select_related("sub_category", "sub_category__parent")
@@ -209,7 +231,7 @@ class AdminLoginAPIView(APIView):
         return Response({
             "access": str(refresh.access_token),
             "refresh": str(refresh),
-            "admin": AdminUserSerializer(admin).data,
+            "admin": AdminProfileSerializer(admin).data,
         })
 
 

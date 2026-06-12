@@ -5,7 +5,9 @@ from django.utils.text import slugify
 
 from rest_framework import serializers
 
-from .models import Admin, AdminProfile, Category, Employee, Product, Role, ScreenOnboarding, SubCategory, Supplier
+from .models import (Admin, AdminProfile, Category, Employee, Product,
+                     Role, ScreenOnboarding, SubCategory, Supplier,
+                     Amenity, Store)
 from userside.models import Order
 
 
@@ -21,13 +23,13 @@ class RoleListSerializer(serializers.ModelSerializer):
         model = Role
         fields = ("id", "role", "permission", "is_admin")
 
-class AdminUserSerializer(serializers.ModelSerializer):
+class AdminProfileSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=False)
     role_name = serializers.CharField(source="role.role", read_only=True)
 
     class Meta:
         model = Admin
-        fields = ("id", "name", "email", "phone", "password", "status", "role", "role_name", "created_at", "updated_at", "deleted_at")
+        fields = ("id", "name", "email", "country_code", "phone", "password", "status", "role", "role_name", "created_at", "updated_at", "deleted_at")
         read_only_fields = ("id", "created_at", "updated_at", "deleted_at")
 
     def create(self, validated_data):
@@ -152,6 +154,39 @@ class SupplierSerializer(serializers.ModelSerializer):
         model = Supplier
         fields = "__all__"
         read_only_fields = ("id", "created_at", "updated_at", "deleted_at")
+        
+
+class AmenitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Amenity
+        fields = ("id", "name", "created_at", "updated_at", "deleted_at")
+        read_only_fields = ("id", "created_at", "updated_at", "deleted_at")
+
+
+class StoreSerializer(ImageUrlMixin, serializers.ModelSerializer):
+    image = serializers.ImageField(allow_null=True, required=False)
+    amenities = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=Amenity.objects.filter(deleted_at__isnull=True), required=False
+    )
+    amenity_names = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Store
+        fields = (
+            "id", "name", "address", "city", "latitude", "longitude", "phone",
+            "image", "image_url", "is_active", "supports_takeaway", "supports_dine_in",
+            "amenities", "amenity_names", "created_at", "updated_at", "deleted_at",
+        )
+        read_only_fields = ("id", "image_url", "amenity_names", "created_at", "updated_at", "deleted_at")
+        extra_kwargs = {
+            "name": {"error_messages": {"blank": "Store name is required.", "required": "Store name is required."}},
+            "address": {"error_messages": {"blank": "Address is required.", "required": "Address is required."}},
+            "city": {"error_messages": {"blank": "City is required.", "required": "City is required."}},
+            "phone": {"error_messages": {"blank": "Phone number is required.", "required": "Phone number is required."}},
+        }
+
+    def get_amenity_names(self, obj):
+        return [amenity.name for amenity in obj.amenities.filter(deleted_at__isnull=True)]
 
 class ProductSerializer(ImageUrlMixin, serializers.ModelSerializer):
     stock_status = serializers.CharField(read_only=True)
@@ -191,10 +226,12 @@ class EmployeeSerializer(serializers.ModelSerializer):
         fields = "__all__"
         read_only_fields = ("id", "created_at", "updated_at", "deleted_at")
 
-class AdminProfileSerializer(serializers.ModelSerializer):
+class EmployeeSerializer(ImageUrlMixin, serializers.ModelSerializer):
+    image = serializers.ImageField(allow_null=True, required=False)
+
     class Meta:
-        model = AdminProfile
-        fields = "__all__"
+        model = Employee
+        fields = ("id", "name", "store", "contact_number", "email", "availability", "delivered_orders", "image", "image_url", "created_at", "updated_at", "deleted_at")
         read_only_fields = ("id", "created_at", "updated_at", "deleted_at")
 
 class ScreenOnboardingSerializer(ImageUrlMixin, serializers.ModelSerializer):
