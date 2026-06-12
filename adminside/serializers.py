@@ -220,11 +220,17 @@ class ProductSerializer(ImageUrlMixin, serializers.ModelSerializer):
                     raise serializers.ValidationError({field: "Enter valid JSON."}) from exc
         return attrs
 
-class EmployeeSerializer(serializers.ModelSerializer):
+class EmployeeSerializer(ImageUrlMixin, serializers.ModelSerializer):
+    image = serializers.ImageField(allow_null=True, required=False)
+
     class Meta:
         model = Employee
-        fields = "__all__"
-        read_only_fields = ("id", "created_at", "updated_at", "deleted_at")
+        fields = (
+            "id", "name", "store", "contact_number", "email", "availability",
+            "delivered_orders", "image", "image_url", "created_at", "updated_at", "deleted_at",
+        )
+        read_only_fields = ("id", "image_url", "created_at", "updated_at", "deleted_at")
+        extra_kwargs = {"store": {"required": False, "allow_null": True}}
 
 class EmployeeSerializer(ImageUrlMixin, serializers.ModelSerializer):
     image = serializers.ImageField(allow_null=True, required=False)

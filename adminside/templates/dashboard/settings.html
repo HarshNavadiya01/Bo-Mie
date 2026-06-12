@@ -78,17 +78,37 @@ function togglePass(){
   else{inp.type='password';icon.className='bi bi-eye-slash';}
 }
 
+function applyAdminInfo(info){
+  if(!info || !info.id) return;
+  document.getElementById('pf-name').value=info.name||'';
+  document.getElementById('pf-email').value=info.email||'';
+  document.getElementById('pf-code').value=info.country_code||'+91';
+  document.getElementById('pf-phone').value=info.phone||'';
+  document.getElementById('pf-name-display').textContent=info.name||'Admin';
+  document.getElementById('pf-role-display').textContent=info.role_name||'Administrator';
+  document.getElementById('profile-avatar').src=`https://ui-avatars.com/api/?name=${encodeURIComponent(info.name||'Admin')}&background=343434&color=fff&size=160`;
+}
+
+async function apiErrorText(res, fallback){
+  if(!res) return fallback;
+  const text=await res.text();
+  try{
+    const data=JSON.parse(text);
+    if(data.detail) return data.detail;
+    return Object.entries(data).map(([field,msg])=>`${field}: ${Array.isArray(msg)?msg.join(', '):msg}`).join(' | ') || fallback;
+  }catch(e){return text||fallback;}
+}
+
 async function loadProfile(){
-  const info=JSON.parse(localStorage.getItem('admin_info')||'{}');
-  if(info.name){
-    document.getElementById('pf-name').value=info.name||'';
-    document.getElementById('pf-email').value=info.email||'';
-    document.getElementById('pf-phone').value=info.phone||'';
-    document.getElementById('pf-code').value=info.country_code||'+91';
-    document.getElementById('pf-name-display').textContent=info.name||'Admin';
-    document.getElementById('pf-role-display').textContent=info.role_name||'Administrator';
-    document.getElementById('profile-avatar').src=`https://ui-avatars.com/api/?name=${encodeURIComponent(info.name)}&background=343434&color=fff&size=160`;
-  }
+  let info=JSON.parse(localStorage.getItem('admin_info')||'{}');
+  applyAdminInfo(info);
+  if(info.id){
+    const fresh=await apiGet(`/manage-roles/admins/${info.id}/`);
+    if(fresh){
+      info={...info,...fresh};
+      localStorage.setItem('admin_info',JSON.stringify(info));
+      applyAdminInfo(info);
+    }
   // Load profiles from API
   const data=await apiGet('/manage-roles/profiles/?page_size=1');
   if(data&&data.results&&data.results.length){
@@ -116,17 +136,26 @@ async function saveProfile(){
     const r=await apiPatch(`/manage-roles/admins/${info.id}/`,body);
     if(r&&r.ok){
       const updated=await r.json();
-      localStorage.setItem('admin_info',JSON.stringify({...info,...updated}));
+      const merged={...info,...updated};
+      localStorage.setItem('admin_info',JSON.stringify(merged));
+      applyAdminInfo(merged);
+    } else {
+      toast(await apiErrorText(r,'Could not update admin profile'),'error');
+      return;
     }
   }
 
   // Update profile settings
   if(profileId){
-    await apiPatch(`/manage-roles/profiles/${profileId}/`,{
+    const profileRes=await apiPatch(`/manage-roles/profiles/${profileId}/`,{
       user_id:document.getElementById('pf-userid').value,
       notifications_enabled:document.getElementById('pf-notif').checked,
       location_enabled:document.getElementById('pf-loc').checked
     });
+    if(!profileRes?.ok){
+      toast(await apiErrorText(profileRes,'Could not update profile settings'),'error');
+      return;
+    }
   }
 
   document.getElementById('pf-name-display').textContent=name||'Admin';
