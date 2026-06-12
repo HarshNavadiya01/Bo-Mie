@@ -221,10 +221,10 @@ class DashboardSerializer(serializers.Serializer):
         orders = Order.objects.filter(deleted_at__isnull=True)
         products = Product.objects.filter(deleted_at__isnull=True)
         return {
-            "total_sales": orders.aggregate(v=Sum("order_value"))["v"] or 0,
-            "total_revenue": orders.exclude(status="cancelled").aggregate(v=Sum("order_value"))["v"] or 0,
-            "active_orders": orders.exclude(status="cancelled").count(),
-            "cancel_orders": orders.filter(status="cancelled").count(),
+            "total_sales": orders.aggregate(v=Sum("grand_total"))["v"] or 0,
+            "total_revenue": orders.exclude(order_status="CANCELED").aggregate(v=Sum("grand_total"))["v"] or 0,
+            "active_orders": orders.exclude(order_status="CANCELED").count(),
+            "cancel_orders": orders.filter(order_status="CANCELED").count(),
             "categories": Category.objects.filter(deleted_at__isnull=True).count(),
             "sub_categories": SubCategory.objects.filter(deleted_at__isnull=True).count(),
             "products": products.count(),
