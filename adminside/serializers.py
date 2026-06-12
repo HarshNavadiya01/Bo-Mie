@@ -243,10 +243,41 @@ class EmployeeSerializer(ImageUrlMixin, serializers.ModelSerializer):
 class ScreenOnboardingSerializer(ImageUrlMixin, serializers.ModelSerializer):
     image = serializers.ImageField(allow_null=True, required=False)
 
+    # Require display order to be explicitly provided
+    display_order = serializers.IntegerField(required=True, min_value=0)
+
     class Meta:
         model = ScreenOnboarding
-        fields = ("id", "image", "image_url", "title", "sort_order", "is_active", "created_at", "updated_at", "deleted_at")
+        fields = (
+            "id",
+            "image",
+            "image_url",
+            "title",
+            "display_order",
+            "is_active",
+            "created_at",
+            "updated_at",
+            "deleted_at",
+        )
         read_only_fields = ("id", "image_url", "created_at", "updated_at", "deleted_at")
+
+    def validate(self, attrs):
+        display_order = attrs.get("display_order")
+        if display_order is None:
+            raise serializers.ValidationError({"display_order": "Display order is required."})
+
+        instance = getattr(self, "instance", None)
+        qs = ScreenOnboarding.objects.filter(display_order=display_order)
+        if instance and instance.pk:
+            qs = qs.exclude(pk=instance.pk)
+
+        # Global uniqueness for display order (active + inactive)
+        if qs.exists():
+            raise serializers.ValidationError({"display_order": "Display order must be unique."})
+
+        return attrs
+
+
 
 class DashboardSerializer(serializers.Serializer):
     total_sales = serializers.DecimalField(max_digits=12, decimal_places=2)

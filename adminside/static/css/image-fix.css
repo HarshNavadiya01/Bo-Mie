@@ -1,0 +1,3 @@
+.img-upload-area{overflow:hidden;}
+.upload-preview{max-width:100%;width:100%;height:260px;object-fit:contain;object-position:center;overflow:hidden;display:none;}
+.img-upload-area.has-preview .upload-preview{display:block;}

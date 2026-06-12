@@ -179,12 +179,13 @@ class ScreenOnboarding(BaseModel):
 
     image = models.ImageField(upload_to="images/onboarding/", null=True, blank=True)
     title = models.CharField(max_length=200, blank=True)
-    sort_order = models.PositiveIntegerField(default=0)
+    display_order = models.PositiveIntegerField(unique=True, null=False)
     is_active = models.BooleanField(default=True)
 
     class Meta:
-        ordering = ["sort_order", "id"]
-        indexes = [models.Index(fields=["is_active", "sort_order"])]
+        ordering = ["display_order", "id"]
+        indexes = [models.Index(fields=["is_active", "display_order"])]
+
 
     def __str__(self):
         return self.title or f"Onboarding #{self.id}"

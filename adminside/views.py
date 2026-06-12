@@ -44,12 +44,14 @@ from .serializers import (
 PAGE_TEMPLATES = {
     "dashboard": "dashboard/dashboard.html",
     "inventory": "dashboard/inventory.html",
+    "onboarding-management": "dashboard/onboarding-management.html",
     "reports":   "dashboard/reports.html",
     "employees": "dashboard/employee.html",
     "orders":    "dashboard/orders.html",
     "settings":  "dashboard/settings.html",
     "stores":    "dashboard/stores.html",
 }
+
 
 
 class SoftDeleteModelViewSet(ModelViewSet):
@@ -195,6 +197,9 @@ class ScreenOnboardingViewSet(SoftDeleteModelViewSet):
     serializer_class = ScreenOnboardingSerializer
     authentication_classes = [AdminJWTAuthentication]
     permission_classes = [IsAuthenticated]
+
+
+
 
 
 class DashboardMetricsAPIView(APIView):
