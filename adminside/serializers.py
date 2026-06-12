@@ -204,7 +204,7 @@ class ProductSerializer(ImageUrlMixin, serializers.ModelSerializer):
             "warning_label", "allergens", "preparation_time_minutes", "base_price", "nutrition",
             "steps_to_burn", "reward_stars_required", "stock_status", "created_at", "updated_at", "deleted_at",
         )
-        read_only_fields = ("id", "category", "category_name", "sub_category_name", "image_url", "stock_status", "created_at", "updated_at", "deleted_at")
+        read_only_fields = ("id", "category", "category_name", "sub_category_name", "image_url", "stock_status", "app_rating", "created_at", "updated_at", "deleted_at")
 
     def validate(self, attrs):
         for field in ("allergens", "nutrition"):

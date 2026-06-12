@@ -78,7 +78,6 @@ class SubCategory(BaseModel):
         null=True,
         blank=True
     )
-    display_order = models.IntegerField(default=0)
     status = models.CharField(
         max_length=20,
         default="active"
