@@ -13,7 +13,7 @@ from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
 from .authentication import AdminJWTAuthentication
-from .models import Admin, AdminProfile, Category, Employee, Order, Product, Role, Supplier, ScreenOnboarding
+from .models import Admin, AdminProfile, Category, Employee, Product, Role, Supplier, ScreenOnboarding
 
 from .permissions import HasRolePermission, IsRoleAdmin
 from .serializers import (
@@ -26,7 +26,6 @@ from .serializers import (
     CategorySerializer,
     DashboardSerializer,
     EmployeeSerializer,
-    OrderSerializer,
     ProductSerializer,
     RoleListSerializer,
     RoleSerializer,
@@ -115,21 +114,6 @@ class EmployeeViewSet(SoftDeleteModelViewSet):
         if avail:
             qs = qs.filter(availability=avail)
         return qs
-
-
-class OrderViewSet(SoftDeleteModelViewSet):
-    queryset = Order.objects.select_related("product", "assigned_employee")
-    serializer_class = OrderSerializer
-    authentication_classes = [AdminJWTAuthentication]
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        qs = super().get_queryset()
-        st = self.request.query_params.get("status")
-        if st:
-            qs = qs.filter(status=st)
-        return qs
-
 
 class AdminProfileViewSet(SoftDeleteModelViewSet):
     queryset = AdminProfile.objects.select_related("admin")
