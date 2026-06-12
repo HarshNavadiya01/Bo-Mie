@@ -19,12 +19,14 @@ from .views import (
     ProductViewSet,
     RoleView,
     SupplierViewSet,
+    SubCategoryViewSet
 )
 
 router = DefaultRouter()
 router.register(r"role", RoleView, basename="role")
 router.register(r"admins", AdminUserViewSet, basename="admins")
 router.register(r"categories", CategoryViewSet, basename="categories")
+router.register(r"sub-categories", SubCategoryViewSet, basename="sub-categories")
 router.register(r"suppliers", SupplierViewSet, basename="suppliers")
 router.register(r"products", ProductViewSet, basename="products")
 router.register(r"employees", EmployeeViewSet, basename="employees")

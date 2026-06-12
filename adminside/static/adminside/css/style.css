@@ -168,6 +168,14 @@ td{padding:13px 16px;font-size:13.5px;color:var(--gray-700);vertical-align:middl
 .img-upload-area:hover{border-color:var(--brand-light)}
 .img-upload-area i{font-size:24px;color:var(--gray-300);display:block;margin-bottom:8px}
 .img-upload-area p{font-size:12.5px;color:var(--gray-500)}
+.img-upload-area.has-preview{padding:10px}
+.img-upload-area.has-preview i{display:none}
+.upload-preview{display:none;width:100%;height:130px;object-fit:cover;border-radius:var(--radius-sm);margin-bottom:8px;border:1px solid var(--gray-200)}
+.img-upload-area.has-preview .upload-preview{display:block}
+.detail-stack{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--gray-500)}
+.detail-stack strong{color:var(--gray-700);font-weight:700}
+.option-badges{display:flex;flex-wrap:wrap;gap:5px}
+.option-badges .badge{white-space:nowrap}
 
 /* TOAST */
 #toast-container{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:10px}
